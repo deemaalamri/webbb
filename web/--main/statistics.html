@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Statistics</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
@@ -24,16 +23,14 @@
   <h1>Study Statistics</h1>
   <div class="top-user">
   <span id="userNameDisplay"></span>
-  <img id="userAvatar" class="user-avatar" src="female.png">
+  <img id="userAvatar" class="user-avatar" src="c:\Users\danam\Desktop\web-project5\female.png">
 </div>
  
-
-  <!-- التقسيم الرئيسي -->
   <div class="stats-container">
     
-    <!-- الجدول - يسار -->
     <div class="stats-left">
       <h3 class="section-title">📋 Weekly Data</h3>
+      <p>Enter the number of hours in the input cells below.</p>
       <table id="statsTable">
         <tr>
           <th>Day</th>
@@ -44,7 +41,6 @@
       <button id="saveStatsBtn">Save Changes</button>
     </div>
 
-    <!-- البارات - يمين -->
     <div class="stats-right">
       <h3 class="section-title">📊 Visual Overview</h3>
       <div id="chartContainer"></div>
@@ -52,7 +48,6 @@
 
   </div>
 
-  <!-- كروت الإحصائيات -->
   <div class="stats-cards">
     <div class="stat-card">
       <div class="number" id="totalHours">0</div>
@@ -71,7 +66,6 @@
 </div>
 
 <script>
-// البيانات
 let stats = JSON.parse(localStorage.getItem("stats")) || [
   {day: "Sunday", hours: 0},
   {day: "Monday", hours: 2},
@@ -82,12 +76,15 @@ let stats = JSON.parse(localStorage.getItem("stats")) || [
   {day: "Saturday", hours: 2}
 ];
 
+let availability = JSON.parse(localStorage.getItem("availability")) || {
+  "Sunday": 0, "Monday": 0, "Tuesday": 0, "Wednesday": 0,
+  "Thursday": 0, "Friday": 0, "Saturday": 0
+};
+
 const table = document.getElementById("statsTable");
 const chartContainer = document.getElementById("chartContainer");
 
-// إنشاء الجدول
 function populateTable() {
-  // حذف الصفوف القديمة
   while (table.rows.length > 1) {
     table.deleteRow(1);
   }
@@ -103,7 +100,9 @@ function populateTable() {
     hoursCell.innerText = s.hours;
     hoursCell.contentEditable = "true";
 
-    if (s.hours > 0) {
+    const availableHours = availability[s.day] || 0;
+
+    if (s.hours >= availableHours && availableHours > 0) {
       statusCell.innerHTML = '<span class="status-completed">✓ Completed</span>';
     } else {
       statusCell.innerHTML = '<span class="status-missed">✗ Missed</span>';
@@ -111,7 +110,6 @@ function populateTable() {
   });
 }
 
-// إنشاء البارات الأفقية
 function renderBars() {
   chartContainer.innerHTML = "";
   
@@ -132,13 +130,14 @@ function renderBars() {
   });
 }
 
-// تحديث الإحصائيات
 function updateStats() {
   let total = 0, completed = 0, missed = 0;
 
   stats.forEach(s => {
     total += s.hours;
-    if (s.hours > 0) completed++;
+    const availableHours = availability[s.day] || 0;
+
+    if (s.hours >= availableHours && availableHours > 0) completed++;
     else missed++;
   });
 
@@ -147,7 +146,6 @@ function updateStats() {
   document.getElementById("missedSessions").innerText = missed;
 }
 
-// حفظ التعديلات
 document.getElementById("saveStatsBtn").addEventListener("click", () => {
   for (let i = 1; i < table.rows.length; i++) {
     let day = table.rows[i].cells[0].innerText;
@@ -163,7 +161,6 @@ document.getElementById("saveStatsBtn").addEventListener("click", () => {
   updateStats();
 });
 
-// التشغيل الأولي
 populateTable();
 renderBars();
 updateStats();
