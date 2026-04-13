@@ -6,7 +6,6 @@
 <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
 <body onload="loadUserProfile();">
 
 <div class="sidebar">
@@ -22,12 +21,11 @@
 <div class="main">
   <h1>Study Statistics</h1>
   <div class="top-user">
-  <span id="userNameDisplay"></span>
-  <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
-</div>
- 
+    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+    <span id="userNameDisplay"></span>
+  </div>
+
   <div class="stats-container">
-    
     <div class="stats-left">
       <h3 class="section-title">📋 Weekly Data</h3>
       <p>Enter the number of hours in the input cells below.</p>
@@ -45,7 +43,6 @@
       <h3 class="section-title">📊 Visual Overview</h3>
       <div id="chartContainer"></div>
     </div>
-
   </div>
 
   <div class="stats-cards">
@@ -62,7 +59,6 @@
       <div class="label">Missed Sessions</div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -91,7 +87,7 @@ function populateTable() {
 
   stats.forEach(s => {
     let row = table.insertRow();
-    
+
     let dayCell = row.insertCell(0);
     let hoursCell = row.insertCell(1);
     let statusCell = row.insertCell(2);
@@ -112,12 +108,12 @@ function populateTable() {
 
 function renderBars() {
   chartContainer.innerHTML = "";
-  
+
   const maxHours = Math.max(...stats.map(s => s.hours), 1);
 
   stats.forEach(s => {
     const barWidth = (s.hours / maxHours) * 100;
-    
+
     const barRow = document.createElement("div");
     barRow.classList.add("bar-row");
 
@@ -166,5 +162,6 @@ renderBars();
 updateStats();
 </script>
 
+<script src="script.js"></script>
 </body>
 </html>
