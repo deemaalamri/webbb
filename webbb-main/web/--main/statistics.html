@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 
-<body onload="loadUserProfile();">
+<body class="statistics-page" onload="loadUserProfile(); initStatisticsPage();">
 
 <div class="sidebar">
   <h2>Study Planner</h2>
@@ -20,146 +20,184 @@
 
 <div class="main">
   <h1>Study Statistics</h1>
+
   <div class="top-user">
-    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
     <span id="userNameDisplay"></span>
+    <img id="userAvatar" class="user-avatar" src="female.png">
   </div>
 
   <div class="stats-container">
     <div class="stats-left">
-      <h3 class="section-title">📋 Weekly Data</h3>
-      <p>Enter the number of hours in the input cells below.</p>
       <table id="statsTable">
-        <tr>
-          <th>Day</th>
-          <th>Hours</th>
-          <th>Status</th>
-        </tr>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Hours</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
       </table>
-      <button id="saveStatsBtn">Save Changes</button>
     </div>
 
     <div class="stats-right">
-      <h3 class="section-title">📊 Visual Overview</h3>
       <div id="chartContainer"></div>
     </div>
   </div>
+
+  
+  <p class="stats-note">
+    Weekly Study Performance Summary
+    
+  </p>
 
   <div class="stats-cards">
     <div class="stat-card">
       <div class="number" id="totalHours">0</div>
       <div class="label">Total Hours</div>
     </div>
+
     <div class="stat-card completed">
       <div class="number" id="completedSessions">0</div>
-      <div class="label">Completed Sessions</div>
+      <div class="label">Completed</div>
     </div>
+
     <div class="stat-card missed">
       <div class="number" id="missedSessions">0</div>
-      <div class="label">Missed Sessions</div>
+      <div class="label">Missed</div>
     </div>
   </div>
 </div>
 
 <script>
-let stats = JSON.parse(localStorage.getItem("stats")) || [
-  {day: "Sunday", hours: 0},
-  {day: "Monday", hours: 2},
-  {day: "Tuesday", hours: 8},
-  {day: "Wednesday", hours: 4},
-  {day: "Thursday", hours: 3},
-  {day: "Friday", hours: 7},
-  {day: "Saturday", hours: 2}
-];
+const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-let availability = JSON.parse(localStorage.getItem("availability")) || {
-  "Sunday": 0, "Monday": 0, "Tuesday": 0, "Wednesday": 0,
-  "Thursday": 0, "Friday": 0, "Saturday": 0
-};
+function getAvailability(){
+  return JSON.parse(localStorage.getItem("ssp_availability")) ||
+         JSON.parse(localStorage.getItem("availability")) || {};
+}
 
-const table = document.getElementById("statsTable");
-const chartContainer = document.getElementById("chartContainer");
+function getDeadlines(){
+  return JSON.parse(localStorage.getItem("ssp_deadlines")) ||
+         JSON.parse(localStorage.getItem("deadlines")) || [];
+}
 
-function populateTable() {
-  while (table.rows.length > 1) {
-    table.deleteRow(1);
-  }
+function getCompleted(){
+  return JSON.parse(localStorage.getItem("ssp_completedTasks") || "{}");
+}
 
-  stats.forEach(s => {
-    let row = table.insertRow();
+function buildPlan(){
+  const availability = getAvailability();
+  const deadlines = getDeadlines().sort((a,b)=>new Date(a.date)-new Date(b.date));
 
-    let dayCell = row.insertCell(0);
-    let hoursCell = row.insertCell(1);
-    let statusCell = row.insertCell(2);
+  const plan = {};
+  let index = 0;
 
-    dayCell.innerText = s.day;
-    hoursCell.innerText = s.hours;
-    hoursCell.contentEditable = "true";
+  days.forEach(day=>{
+    plan[day]=[];
+    let slots = Number(availability[day]||0);
 
-    const availableHours = availability[s.day] || 0;
+    for(let i=0;i<slots;i++){
+      if(deadlines.length===0) break;
 
-    if (s.hours >= availableHours && availableHours > 0) {
-      statusCell.innerHTML = '<span class="status-completed">✓ Completed</span>';
-    } else {
-      statusCell.innerHTML = '<span class="status-missed">✗ Missed</span>';
+      let t = deadlines[index % deadlines.length];
+
+      plan[day].push({
+        id: `merged-${day}-${i}-${t.course || "Course"}-${t.name || t.examName || "Study Session"}`
+      });
+
+      index++;
     }
   });
+
+  return {plan,availability};
 }
 
-function renderBars() {
-  chartContainer.innerHTML = "";
+function countCompleted(items,completed){
+  let count=0;
+  items.forEach(item=>{
+    if(completed[item.id]) count++;
+  });
+  return count;
+}
 
-  const maxHours = Math.max(...stats.map(s => s.hours), 1);
+function renderTable(){
+  const tbody=document.querySelector("#statsTable tbody");
+  const completed=getCompleted();
+  const {plan,availability}=buildPlan();
 
-  stats.forEach(s => {
-    const barWidth = (s.hours / maxHours) * 100;
+  tbody.innerHTML="";
 
-    const barRow = document.createElement("div");
-    barRow.classList.add("bar-row");
+  days.forEach(day=>{
+    let hours=Number(availability[day]||0);
+    let items=plan[day];
+    let done=countCompleted(items,completed);
 
-    barRow.innerHTML = `
-      <span class="day-name">${s.day}</span>
-      <div class="bar" style="width: ${Math.max(barWidth, 10)}%">${s.hours}h</div>
+    let status = (hours>0 && done===hours)
+      ? '<span class="status-completed">✓ Completed</span>'
+      : '<span class="status-missed">✗ Missed</span>';
+
+    let row=document.createElement("tr");
+    row.innerHTML=`
+      <td>${day}</td>
+      <td>${hours}</td>
+      <td>${status}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function renderBars(){
+  const container=document.getElementById("chartContainer");
+  const completed=getCompleted();
+  const {plan}=buildPlan();
+
+  container.innerHTML="";
+
+  const max = Math.max(...days.map(d=>countCompleted(plan[d],completed)),1);
+
+  days.forEach(day=>{
+    let done=countCompleted(plan[day],completed);
+    let width = done>0 ? (done/max)*100 : 0;
+
+    let row=document.createElement("div");
+    row.classList.add("bar-row");
+
+    row.innerHTML=`
+      <span class="day-name">${day}</span>
+      <div class="bar" style="width:${width}%">${done}h</div>
     `;
 
-    chartContainer.appendChild(barRow);
+    container.appendChild(row);
   });
 }
 
-function updateStats() {
-  let total = 0, completed = 0, missed = 0;
+function renderCards(){
+  const completed=getCompleted();
+  const {plan,availability}=buildPlan();
 
-  stats.forEach(s => {
-    total += s.hours;
-    const availableHours = availability[s.day] || 0;
+  let total=0,done=0,miss=0;
 
-    if (s.hours >= availableHours && availableHours > 0) completed++;
-    else missed++;
+  days.forEach(day=>{
+    let hours=Number(availability[day]||0);
+    let items=plan[day];
+    let c=countCompleted(items,completed);
+
+    total+=hours;
+    done+=c;
+    miss+=Math.max(items.length-c,0);
   });
 
-  document.getElementById("totalHours").innerText = total + "h";
-  document.getElementById("completedSessions").innerText = completed;
-  document.getElementById("missedSessions").innerText = missed;
+  document.getElementById("totalHours").innerText=total+"h";
+  document.getElementById("completedSessions").innerText=done;
+  document.getElementById("missedSessions").innerText=miss;
 }
 
-document.getElementById("saveStatsBtn").addEventListener("click", () => {
-  for (let i = 1; i < table.rows.length; i++) {
-    let day = table.rows[i].cells[0].innerText;
-    let hours = parseInt(table.rows[i].cells[1].innerText) || 0;
-
-    let statObj = stats.find(s => s.day === day);
-    if (statObj) statObj.hours = hours;
-  }
-
-  localStorage.setItem("stats", JSON.stringify(stats));
-  populateTable();
+function initStatisticsPage(){
+  renderTable();
   renderBars();
-  updateStats();
-});
-
-populateTable();
-renderBars();
-updateStats();
+  renderCards();
+}
 </script>
 
 <script src="script.js"></script>
