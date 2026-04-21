@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Statistics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body onload="loadUserProfile();">
+
+<div class="sidebar">
+  <h2>Study Planner</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="courses.html">Courses</a>
+  <a href="deadlines.html">Deadlines</a>
+  <a href="availability.html">Availability</a>
+  <a href="statistics.html" class="active">Statistics</a>
+  <a href="index.html">Log out</a>
+</div>
+
+<div class="main">
+  <h1>Study Statistics</h1>
+  <div class="top-user">
+    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+    <span id="userNameDisplay"></span>
+  </div>
+
+  <div class="stats-container">
+    <div class="stats-left">
+      <h3 class="section-title">📋 Weekly Data</h3>
+      <p>Enter the number of hours in the input cells below.</p>
+      <table id="statsTable">
+        <tr>
+          <th>Day</th>
+          <th>Hours</th>
+          <th>Status</th>
+        </tr>
+      </table>
+      <button id="saveStatsBtn">Save Changes</button>
+    </div>
+
+    <div class="stats-right">
+      <h3 class="section-title">📊 Visual Overview</h3>
+      <div id="chartContainer"></div>
+    </div>
+  </div>
+
+  <div class="stats-cards">
+    <div class="stat-card">
+      <div class="number" id="totalHours">0</div>
+      <div class="label">Total Hours</div>
+    </div>
+    <div class="stat-card completed">
+      <div class="number" id="completedSessions">0</div>
+      <div class="label">Completed Sessions</div>
+    </div>
+    <div class="stat-card missed">
+      <div class="number" id="missedSessions">0</div>
+      <div class="label">Missed Sessions</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let stats = JSON.parse(localStorage.getItem("stats")) || [
+  {day: "Sunday", hours: 0},
+  {day: "Monday", hours: 2},
+  {day: "Tuesday", hours: 8},
+  {day: "Wednesday", hours: 4},
+  {day: "Thursday", hours: 3},
+  {day: "Friday", hours: 7},
+  {day: "Saturday", hours: 2}
+];
+
+let availability = JSON.parse(localStorage.getItem("availability")) || {
+  "Sunday": 0, "Monday": 0, "Tuesday": 0, "Wednesday": 0,
+  "Thursday": 0, "Friday": 0, "Saturday": 0
+};
+
+const table = document.getElementById("statsTable");
+const chartContainer = document.getElementById("chartContainer");
+
+function populateTable() {
+  while (table.rows.length > 1) {
+    table.deleteRow(1);
+  }
+
+  stats.forEach(s => {
+    let row = table.insertRow();
+
+    let dayCell = row.insertCell(0);
+    let hoursCell = row.insertCell(1);
+    let statusCell = row.insertCell(2);
+
+    dayCell.innerText = s.day;
+    hoursCell.innerText = s.hours;
+    hoursCell.contentEditable = "true";
+
+    const availableHours = availability[s.day] || 0;
+
+    if (s.hours >= availableHours && availableHours > 0) {
+      statusCell.innerHTML = '<span class="status-completed">✓ Completed</span>';
+    } else {
+      statusCell.innerHTML = '<span class="status-missed">✗ Missed</span>';
+    }
+  });
+}
+
+function renderBars() {
+  chartContainer.innerHTML = "";
+
+  const maxHours = Math.max(...stats.map(s => s.hours), 1);
+
+  stats.forEach(s => {
+    const barWidth = (s.hours / maxHours) * 100;
+
+    const barRow = document.createElement("div");
+    barRow.classList.add("bar-row");
+
+    barRow.innerHTML = `
+      <span class="day-name">${s.day}</span>
+      <div class="bar" style="width: ${Math.max(barWidth, 10)}%">${s.hours}h</div>
+    `;
+
+    chartContainer.appendChild(barRow);
+  });
+}
+
+function updateStats() {
+  let total = 0, completed = 0, missed = 0;
+
+  stats.forEach(s => {
+    total += s.hours;
+    const availableHours = availability[s.day] || 0;
+
+    if (s.hours >= availableHours && availableHours > 0) completed++;
+    else missed++;
+  });
+
+  document.getElementById("totalHours").innerText = total + "h";
+  document.getElementById("completedSessions").innerText = completed;
+  document.getElementById("missedSessions").innerText = missed;
+}
+
+document.getElementById("saveStatsBtn").addEventListener("click", () => {
+  for (let i = 1; i < table.rows.length; i++) {
+    let day = table.rows[i].cells[0].innerText;
+    let hours = parseInt(table.rows[i].cells[1].innerText) || 0;
+
+    let statObj = stats.find(s => s.day === day);
+    if (statObj) statObj.hours = hours;
+  }
+
+  localStorage.setItem("stats", JSON.stringify(stats));
+  populateTable();
+  renderBars();
+  updateStats();
+});
+
+populateTable();
+renderBars();
+updateStats();
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

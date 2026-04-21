@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Availability</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body onload="loadUserProfile(); initMergedAvailabilityPage();">
+
+<div class="sidebar">
+  <h2>Study Planner</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="courses.html">Courses</a>
+  <a href="deadlines.html">Deadlines</a>
+  <a href="availability.html" class="active">Availability</a>
+  <a href="statistics.html">Statistics</a>
+  <a href="index.html">Log out</a>
+</div>
+
+<div class="main">
+  <div class="top-user">
+    <span id="userNameDisplay"></span>
+    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+  </div>
+
+  <h1>📅 Availability & Weekly Plan</h1>
+
+  <div class="availability-stats">
+    <div class="stat-box">
+      <div class="number" id="totalHours">0h</div>
+      <div class="label">Total Weekly Hours</div>
+    </div>
+    <div class="stat-box">
+      <div class="number" id="avgHours">0h</div>
+      <div class="label">Daily Average</div>
+    </div>
+    <div class="stat-box">
+      <div class="number" id="activeDays">0</div>
+      <div class="label">Active Days</div>
+    </div>
+  </div>
+
+  <div class="availability-grid">
+    <div class="card">
+      <h3 class="section-title">✏️ Set Your Hours</h3>
+      <table id="availabilityTable">
+        <tr>
+          <th>Day</th>
+          <th>Available Hours</th>
+        </tr>
+        <tr><td>Sunday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Monday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Tuesday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Wednesday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Thursday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Friday</td><td contenteditable="true">0</td></tr>
+        <tr><td>Saturday</td><td contenteditable="true">0</td></tr>
+      </table>
+
+      <div class="availability-actions">
+        <button id="saveAvailability">Save Availability</button>
+        <button id="generateWeeklyPlanBtn">Generate Weekly Plan</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title">📊 Visual Overview</h3>
+      <div id="visualBars"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 25px;">
+    <h3 class="section-title">🗓️ Weekly Study Plan</h3>
+    <div id="weeklyPlan"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
