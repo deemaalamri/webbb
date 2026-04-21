@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login & Sign Up</title>
+<link rel="stylesheet" href="styleLogin.css">
+</head>
+<body>
+
+<div class="container" id="main-container">
+  <input type="checkbox" id="toggle">
+
+  <!-- LOGIN -->
+  <div class="form-box login">
+    <h2>Login</h2>
+    <input type="text" id="login-username" placeholder="Username" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button id="loginBtn">Login</button>
+    <p>
+      Don't have an account?
+      <label for="toggle">Sign Up</label>
+    </p>
+  </div>
+
+  <!-- SIGN UP -->
+  <div class="form-box signup">
+    <h2>Sign Up</h2>
+    <input type="text" id="reg-username" placeholder="Username" required>
+    <input type="email" id="reg-email" placeholder="Email" required>
+    <input type="tel" id="reg-phone" placeholder="Phone Number" required>
+    <input type="password" id="reg-password" placeholder="Password" required>
+    <button id="registerBtn">Register</button>
+    <p>
+      Already have an account?
+      <label for="toggle">Login</label>
+    </p>
+  </div>
+
+  <!-- BLUE SIDE -->
+  <div class="side">
+    <div class="text signup-text">
+      <h2>HELLO FRIEND!</h2>
+      <p>Create your account and start your journey.</p>
+    </div>
+    <div class="text login-text">
+      <h2>WELCOME BACK!</h2>
+      <p>We are happy to see you again.</p>
+    </div>
+    
+  </div>
+<script>
+// تسجيل مستخدم جديد
+document.getElementById('registerBtn').addEventListener('click', function(){
+  const username = document.getElementById('reg-username').value;
+  const email = document.getElementById('reg-email').value;
+  const phone = document.getElementById('reg-phone').value;
+  const password = document.getElementById('reg-password').value;
+
+  if(!username || !email || !phone || !password){
+    alert("Please fill all fields!");
+    return;
+  }
+
+  localStorage.setItem("user", JSON.stringify({username,email,phone,password}));
+  localStorage.setItem("loggedInUser", username);
+
+  showWelcome(username, "Registration Successful! Redirecting...");
+});
+
+// تسجيل الدخول
+document.getElementById('loginBtn').addEventListener('click', function(){
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  const savedUser = JSON.parse(localStorage.getItem("user"));
+
+  if(!savedUser){
+    alert("No account found! Register first.");
+    return;
+  }
+
+  if(username === savedUser.username && password === savedUser.password){
+    localStorage.setItem("loggedInUser", username);
+    showWelcome(username, "Login Successful! Redirecting...");
+  } else {
+    alert("Wrong username or password!");
+  }
+});
+
+// دالة عرض صفحة الترحيب داخل نفس الصفحة
+function showWelcome(username,message){
+  const container = document.getElementById('main-container');
+  container.innerHTML = `
+    <div class="success-page">
+      <h1>Welcome, ${username} 🎉</h1>
+      <p>${message}</p>
+    </div>
+  `;
+  // بعد 3 ثواني نرجع للصفحة الرئيسية
+  setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
+}
+</script>
+
+</body>
+</html>
