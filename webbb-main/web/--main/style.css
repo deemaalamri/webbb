@@ -1192,3 +1192,14 @@ input:focus {
 .plan-inline-list li .task-check-item {
   width: 100%;
 }
+/* statistics*/
+.statistics-page .top-user {
+  justify-content: flex-start;
+   }
+   .statistics-page .stats-note {
+  text-align: center;
+  margin: 30px 0; 
+  color: #cbd5e1;
+  font-size: 15px;
+  font-weight: 500;
+}
