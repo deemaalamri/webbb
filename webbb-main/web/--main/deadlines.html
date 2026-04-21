@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Deadlines</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+<body onload="loadUserProfile(); loadDashboard();">
+
+
+<div class="sidebar">
+  <h2>Study Planner</h2>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="courses.html">Courses</a>
+  <a href="deadlines.html" class="active">Deadlines</a>
+  <a href="availability.html">Availability</a>
+  <a href="statistics.html">Statistics</a>
+  <a href="index.html">Log out</a>
+</div>
+
+<div class="main">
+  <div class="top-user">
+  <span id="userNameDisplay"></span>
+  <img id="userAvatar" class="user-avatar" src="female.png">
+</div>
+
+  <h1>⏰ Deadlines</h1>
+  <div class="top-user">
+  <span id="userNameDisplay"></span>
+  <img id="userAvatar" class="user-avatar">
+</div>
+
+
+  <!-- Stats -->
+  <div class="deadline-stats">
+    <div class="stat-box urgent">
+      <div class="number" id="urgentCount">0</div>
+      <div class="label">🔴 Urgent (≤3 days)</div>
+    </div>
+    <div class="stat-box soon">
+      <div class="number" id="soonCount">0</div>
+      <div class="label">🟡 Soon (≤7 days)</div>
+    </div>
+    <div class="stat-box normal">
+      <div class="number" id="normalCount">0</div>
+      <div class="label">🟢 Later (>7 days)</div>
+    </div>
+  </div>
+
+  <!-- Forms -->
+  <div class="forms-grid">
+    <div class="form-card">
+      <h3>📝 Add Assignment</h3>
+      <div class="form-row">
+        <input type="text" id="assignCourse" placeholder="Course">
+        <input type="text" id="assignName" placeholder="Assignment Name">
+        <input type="date" id="assignDate">
+        <button onclick="addDeadline('Assignment')">+ Add</button>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>📋 Add Exam</h3>
+      <div class="form-row">
+        <input type="text" id="examCourse" placeholder="Course">
+        <input type="text" id="examName" placeholder="Exam Name">
+        <input type="date" id="examDate">
+        <button onclick="addDeadline('Exam')">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <h3>📅 All Deadlines</h3>
+    <table id="deadlinesTable">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Course</th>
+          <th>Name</th>
+          <th>Due Date</th>
+          <th>Days Left</th>
+          <th>Priority</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div id="emptyMsg" style="display: none;">
+      <span>✅</span>
+      <p>No deadlines yet. You're all caught up!</p>
+    </div>
+  </div>
+</div>
+/*-------------------*/
+
+<script>
+let deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
+
+function getDaysLeft(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dateStr);
+  return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+}
+
+function updateStats() {
+  let urgent = 0, soon = 0, normal = 0;
+  deadlines.forEach(d => {
+    const days = getDaysLeft(d.date);
+    if (days <= 3) urgent++;
+    else if (days <= 7) soon++;
+    else normal++;
+  });
+  document.getElementById("urgentCount").innerText = urgent;
+  document.getElementById("soonCount").innerText = soon;
+  document.getElementById("normalCount").innerText = normal;
+}
+
+function render() {
+  const tbody = document.querySelector("#deadlinesTable tbody");
+  tbody.innerHTML = "";
+
+  if (deadlines.length === 0) {
+    document.getElementById("emptyMsg").style.display = "block";
+    document.querySelector("#deadlinesTable thead").style.display = "none";
+  } else {
+    document.getElementById("emptyMsg").style.display = "none";
+    document.querySelector("#deadlinesTable thead").style.display = "";
+  }
+
+  // Sort by date
+  const sorted = [...deadlines].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  sorted.forEach((d, index) => {
+    const days = getDaysLeft(d.date);
+    let priorityClass, priorityText;
+    
+    if (days <= 3) {
+      priorityClass = "priority-high";
+      priorityText = "High";
+    } else if (days <= 7) {
+      priorityClass = "priority-medium";
+      priorityText = "Medium";
+    } else {
+      priorityClass = "priority-low";
+      priorityText = "Low";
+    }
+
+    const typeClass = d.type === "Assignment" ? "type-assignment" : "type-exam";
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><span class="${typeClass}">${d.type}</span></td>
+      <td>${d.course}</td>
+      <td>${d.name}</td>
+      <td>${d.date}</td>
+      <td>${days} days</td>
+      <td><span class="${priorityClass}">${priorityText}</span></td>
+      <td><button class="btn-delete" onclick="deleteDeadline(${index})">🗑️</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  localStorage.setItem("deadlines", JSON.stringify(deadlines));
+  updateStats();
+}
+
+function addDeadline(type) {
+  let course, name, date;
+
+  if (type === "Assignment") {
+    course = document.getElementById("assignCourse").value.trim();
+    name = document.getElementById("assignName").value.trim();
+    date = document.getElementById("assignDate").value;
+  } else {
+    course = document.getElementById("examCourse").value.trim();
+    name = document.getElementById("examName").value.trim();
+    date = document.getElementById("examDate").value;
+  }
+
+  if (!course || !name || !date) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  deadlines.push({ type, course, name, date });
+
+  if (type === "Assignment") {
+    document.getElementById("assignCourse").value = "";
+    document.getElementById("assignName").value = "";
+    document.getElementById("assignDate").value = "";
+  } else {
+    document.getElementById("examCourse").value = "";
+    document.getElementById("examName").value = "";
+    document.getElementById("examDate").value = "";
+  }
+
+  render();
+}
+
+function deleteDeadline(index) {
+  if (confirm("Delete this deadline?")) {
+    deadlines.splice(index, 1);
+    render();
+  }
+}
+
+render();
+</script>
+---------------
+
+
+</body>
+</html>
