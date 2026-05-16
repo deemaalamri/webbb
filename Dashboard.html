@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body onload="loadUserProfile()">
+
+<div class="sidebar">
+  <div class="brand-logo">
+    <img src="dashboard-logo.png" class="brand-img" alt="Logo">
+  </div>
+  <a href="dashboard.html" class="active">Dashboard</a>
+  <a href="courses.html">Courses</a>
+  <a href="deadlines.html">Deadlines</a>
+  <a href="availability.html">Availability</a>
+  <a href="statistics.html">Statistics</a>
+  <a href="index.html">Log out</a>
+</div>
+
+<div class="top-user">
+  <span id="userNameDisplay"></span>
+  <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+</div>
+
+<div class="main">
+  <div class="welcome-card">
+    <div>
+      <h2 id="welcome-user">Hello!</h2>
+      <p id="motivational-text">You have <strong id="taskCount">0</strong> tasks today.</p>
+    </div>
+    <div style="font-size: 60px;">📚</div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <h3>📊 Performance</h3>
+      <div class="performance-bars" id="performanceBars"></div>
+    </div>
+
+    <div class="card">
+      <h3>👨‍🏫 My Teachers</h3>
+      <div class="teacher-item">
+        <div class="teacher-avatar">MJ</div>
+        <div class="teacher-info">
+          <h4>Mary Johnson</h4>
+          <span>Mentor</span>
+        </div>
+      </div>
+      <div class="teacher-item">
+        <div class="teacher-avatar">JB</div>
+        <div class="teacher-info">
+          <h4>James Brown</h4>
+          <span>Advisor</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-grid">
+    <div class="card">
+      <h3>📖 My Courses</h3>
+      <div id="coursesList"></div>
+    </div>
+
+    <div class="card">
+      <h3>⏰ Upcoming Deadlines</h3>
+      <div id="deadlinesList"></div>
+    </div>
+
+    <div class="card">
+      <h3>📈 Weekly Progress</h3>
+      <div class="visit-circles" id="visitCircles"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const courses = JSON.parse(localStorage.getItem("courses")) || [];
+const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
+const stats = JSON.parse(localStorage.getItem("stats")) || [];
+
+function renderCourses() {
+  const container = document.getElementById("coursesList");
+  if (!container) return;
+  if (courses.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span>📚</span><p>No courses yet</p></div>`;
+    return;
+  }
+  container.innerHTML = courses.map(c => `
+    <div class="course-item">
+      <span>${c.name}</span>
+      <span class="hours">${c.hours}h</span>
+    </div>
+  `).join('');
+}
+
+function renderDeadlines() {
+  const container = document.getElementById("deadlinesList");
+  if (!container) return;
+  if (deadlines.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span>✅</span><p>No deadlines</p></div>`;
+    return;
+  }
+  const sorted = [...deadlines].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+  container.innerHTML = sorted.map(d => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(d.date);
+    const days = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    let urgencyClass = 'normal';
+    if (days <= 3) urgencyClass = 'urgent';
+    else if (days <= 7) urgencyClass = 'soon';
+    return `
+      <div class="deadline-item">
+        <div class="deadline-info">
+          <h4>${d.name}</h4>
+          <span>${d.course}</span>
+        </div>
+        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+      </div>`;
+  }).join('');
+  const taskCount = document.getElementById("taskCount");
+  if (taskCount) taskCount.innerText = deadlines.length;
+}
+
+function renderPerformance() {
+  const container = document.getElementById("performanceBars");
+  if (!container) return;
+  const data = stats.length ? stats : [
+    {day: "Sun", hours: 3}, {day: "Mon", hours: 5}, {day: "Tue", hours: 4},
+    {day: "Wed", hours: 6}, {day: "Thu", hours: 2}, {day: "Fri", hours: 7}, {day: "Sat", hours: 4}
+  ];
+  const maxHours = Math.max(...data.map(s => s.hours), 1);
+  container.innerHTML = data.map(s => `
+    <div class="bar-item">
+      <div class="bar" style="height: ${(s.hours / maxHours) * 120}px"></div>
+      <span class="bar-label">${s.day}</span>
+    </div>
+  `).join('');
+}
+
+function renderVisitCircles() {
+  const container = document.getElementById("visitCircles");
+  if (!container) return;
+  const data = stats.length ? stats : [
+    {day: "Sun", hours: 3}, {day: "Mon", hours: 5}, {day: "Tue", hours: 4},
+    {day: "Wed", hours: 6}, {day: "Thu", hours: 2}, {day: "Fri", hours: 7}, {day: "Sat", hours: 4}
+  ];
+  const goal = 8;
+  container.innerHTML = data.map(s => `
+    <div>
+      <div class="circle" style="--percent:${Math.min((s.hours/goal)*100,100)}%"><span>${s.hours}h</span></div>
+      <div class="circle-label">${s.day}</div>
+    </div>
+  `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderCourses();
+  renderDeadlines();
+  renderPerformance();
+  renderVisitCircles();
+  const username = localStorage.getItem("loggedInUser") || "Student";
+  const welcome = document.getElementById('welcome-user');
+  if (welcome) welcome.textContent = `Hello, ${username}!`;
+});
+</script>
+<script src="script.js"></script>
+</body>
+</html>
