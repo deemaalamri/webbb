@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Availability</title>
@@ -25,14 +25,8 @@
   </div>
 
   <h1>📅 Availability & Weekly Plan</h1>
-<div id="upcomingReminder" style="
-background:#fff3cd;
-padding:12px;
-border-radius:10px;
-margin-bottom:15px;
-color:#856404;
-font-weight:bold;
-">
+<div id="upcomingReminder">
+
 ⚠️ Reminder: Loading upcoming tasks...
 </div>
   <div class="availability-stats">
@@ -79,12 +73,22 @@ font-weight:bold;
     </div>
   </div>
 
-  <div class="card" style="margin-top: 25px;">
+<div class="card" id="weeklyPlanCard">
     <h3 class="section-title">🗓️ Weekly Study Plan</h3>
     <div id="weeklyPlan"></div>
   </div>
 </div>
 
 <script src="script.js"></script>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-buttons">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-confirm" onclick="confirmAction()">OK</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
+
