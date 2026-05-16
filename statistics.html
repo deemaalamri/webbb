@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Statistics</title>
@@ -13,7 +13,7 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="courses.html">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-  <a href="availability.html">Availability</a>
+  <a href="availability.html">Weekly Plan</a>
   <a href="statistics.html" class="active">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -45,7 +45,7 @@
     </div>
   </div>
 
-  <div class="stats-cards">
+ <div class="stats-cards">
     <div class="stat-card">
       <div class="number" id="totalHours">0</div>
       <div class="label">Total Hours</div>
@@ -57,6 +57,10 @@
     <div class="stat-card missed">
       <div class="number" id="missedSessions">0</div>
       <div class="label">Missed Sessions</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" id="completionRate">0%</div>
+      <div class="label">Completion Rate</div>
     </div>
   </div>
 </div>
@@ -137,9 +141,16 @@ function updateStats() {
     else missed++;
   });
 
+  const completedTasks = JSON.parse(localStorage.getItem("ssp_completedTasks") || "{}");
+  const taskValues = Object.values(completedTasks);
+  const totalTasks = taskValues.length;
+  const doneTasks = taskValues.filter(v => v === true).length;
+  const rate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
   document.getElementById("totalHours").innerText = total + "h";
   document.getElementById("completedSessions").innerText = completed;
   document.getElementById("missedSessions").innerText = missed;
+  document.getElementById("completionRate").innerText = rate + "%";
 }
 
 document.getElementById("saveStatsBtn").addEventListener("click", () => {
@@ -165,3 +176,4 @@ updateStats();
 <script src="script.js"></script>
 </body>
 </html>
+
