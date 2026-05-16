@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Deadlines</title>
@@ -8,8 +8,7 @@
 
 </head>
 
-<body>
-<body onload="loadUserProfile(); loadDashboard();">
+<body onload="loadUserProfile();">
 
 
 <div class="sidebar">
@@ -17,7 +16,7 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="courses.html">Courses</a>
   <a href="deadlines.html" class="active">Deadlines</a>
-  <a href="weeklyplan.html">Weekly Plan</a>
+<a href="availability.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -25,17 +24,12 @@
 <div class="main">
   <div class="top-user">
   <span id="userNameDisplay"></span>
-  <img id="userAvatar" class="user-avatar" src="female.png">
+<img id="userAvatar" class="user-avatar" src="female.png" alt="User">
 </div>
 
   <h1>⏰ Deadlines</h1>
-  <div class="top-user">
-  <span id="userNameDisplay"></span>
-  <img id="userAvatar" class="user-avatar">
-</div>
 
 
-  <!-- Stats -->
   <div class="deadline-stats">
     <div class="stat-box urgent">
       <div class="number" id="urgentCount">0</div>
@@ -51,7 +45,6 @@
     </div>
   </div>
 
-  <!-- Forms هنا عدلت ترا يا ساره  -->
   <div class="forms-grid">
 
   <div class="form-card">
@@ -96,7 +89,7 @@
 
 </div>
 
-  <!-- Table -->
+  
   <div class="card">
     <h3>📅 All Deadlines</h3>
     <table id="deadlinesTable">
@@ -114,10 +107,10 @@
       <tbody></tbody>
     </table>
 
-    <div id="emptyMsg" style="display: none;">
-      <span>✅</span>
-      <p>No deadlines yet. You're all caught up!</p>
-    </div>
+    <div id="emptyMsg" class="empty-hidden">
+  <span>✅</span>
+  <p>No deadlines yet. You're all caught up!</p>
+</div>
   </div>
 </div>
 
@@ -128,8 +121,7 @@ let deadlines =
 JSON.parse(localStorage.getItem("deadlines")) || [];
 
 
-/* ترا ضفت هذا يا ساره
-toast notification    عشان يكون موحد لكل التصميم */
+
 
 function showToast(message, type = "success") {
 
@@ -157,8 +149,7 @@ function showToast(message, type = "success") {
 }
 
 
-/* ترا عدلت هنا يا ساره
-من هنا ترا  يجيب المواد من صفحة الكورسات */
+
 
 function loadCoursesToSelect() {
 
@@ -173,8 +164,7 @@ function loadCoursesToSelect() {
  document.getElementById("examCourse");
 
 
- /* 
-تأكدت إن العناصر موجودة */
+ 
 
  if (!assignSelect || !examSelect) return;
 
@@ -199,9 +189,7 @@ function loadCoursesToSelect() {
  }
 
 
- /* ترا هنا يا ساره
-إضافة المواد الي موجود في كورسس فقط  داخل السلكت */
-
+ 
  courses.forEach(course => {
 
   assignSelect.innerHTML += `
@@ -220,7 +208,7 @@ function loadCoursesToSelect() {
 }
 
 
-/* ترا هذا حق حساب الأيام */
+
 
 function getDaysLeft(dateStr) {
 
@@ -374,7 +362,7 @@ function render() {
 
     <button
      class="btn-delete"
-     onclick="deleteDeadline(${index})"
+onclick="deleteDeadline('${d.id}')"
     >
      🗑️
     </button>
@@ -433,25 +421,31 @@ function addDeadline(type) {
 
 
  
- if (!course || !name || !date) {
-
+if (!course || !name || !date) {
   showToast(
    "Please fill all fields",
    "error"
   );
-
   return;
- }
+}
+
+const today = new Date();
+today.setHours(0,0,0,0);
+if (new Date(date) < today) {
+  showToast("Please enter a future date", "error");
+  return;
+}
 
 
  
 
- deadlines.push({
+deadlines.push({
+  id: Date.now(),
   type,
   course,
   name,
   date
- });
+});
 
 
  
@@ -499,26 +493,13 @@ function addDeadline(type) {
 
 
 
-function deleteDeadline(index) {
-
- deadlines.splice(index,1);
-
- localStorage.setItem(
- "deadlines",
- JSON.stringify(deadlines)
- );
-
- render();
-
- showToast(
- "Deadline deleted successfully",
- "success"
- );
+function deleteDeadline(id) {
+  deadlines = deadlines.filter(d => String(d.id) !== String(id));
+  localStorage.setItem("deadlines", JSON.stringify(deadlines));
+  render();
+  showToast("Deadline deleted successfully", "success");
 }
 
-
-/* ترا هنا يا ساره
-تحميل الصفحة كامل */
 
 window.onload = function () {
 
@@ -530,6 +511,14 @@ window.onload = function () {
 
 </script>
 
-
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-buttons">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-confirm" onclick="confirmAction()">OK</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
