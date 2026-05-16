@@ -1,5 +1,5 @@
-<!DOCTYPE html
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Dashboard</title>
@@ -14,7 +14,7 @@
   <a href="dashboard.html" class="active">Dashboard</a>
   <a href="courses.html">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-  <a href="weeklyplan.html">Weekly Plan</a>
+<a href="availability.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -30,7 +30,7 @@
       <h2 id="welcome-user">Hello!</h2>
       <p id="motivational-text">You have <strong id="taskCount">0</strong> tasks today.</p>
     </div>
-    <div style="font-size: 60px;">📚</div>
+<div class="welcome-emoji">📚</div>
   </div>
 
   <div class="dashboard-grid">
@@ -83,76 +83,9 @@
 </div>
 
 <script>
-  const courses = JSON.parse(localStorage.getItem("ssp_courses")) || [];
+const courses = JSON.parse(localStorage.getItem("courses")) || [];
 const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
 const stats = JSON.parse(localStorage.getItem("stats")) || [];
-
-function renderDeadlines() {
-  const container = document.getElementById("deadlinesList");
-  if (!container) return;
-
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  let exams = [];
-  let assignments = [];
-
-  deadlines.forEach(d => {
-    const diff = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
-
-    if (d.type === "Exam" && diff <= 7 && diff >= 0) {
-      exams.push(d);
-    }
-
-    if (d.type === "Assignment" && diff <= 7 && diff >= 0) {
-      assignments.push(d);
-    }
-  });
-
-  // عرض آخر 3 فقط في القائمة القديمة
-  const sorted = [...deadlines]
-    .sort((a,b) => new Date(a.date) - new Date(b.date))
-    .slice(0,3);
-
-  container.innerHTML = sorted.map(d => `
-    <div class="deadline-item">
-      <div class="deadline-info">
-        <h4>${d.name}</h4>
-        <span>${d.course}</span>
-      </div>
-    </div>
-  `).join("");
-
-  // تحديث العداد
-  const taskCount = document.getElementById("taskCount");
-  if (taskCount) taskCount.innerText = deadlines.length;
-
-  // 🔥 أهم جزء (الجديد)
-  const examBox = document.getElementById("upcomingExams");
-  const assignBox = document.getElementById("upcomingAssignments");
-
-  if (examBox) {
-    examBox.innerHTML = exams.length
-      ? exams.map(e => `
-        <div class="mini-card">
-          <strong>${e.course}</strong>
-          <p>${e.name} - ${e.date}</p>
-        </div>
-      `).join("")
-      : "<p>No upcoming exams</p>";
-  }
-
-  if (assignBox) {
-    assignBox.innerHTML = assignments.length
-      ? assignments.map(a => `
-        <div class="mini-card">
-          <strong>${a.course}</strong>
-          <p>${a.name} - ${a.date}</p>
-        </div>
-      `).join("")
-      : "<p>No upcoming assignments</p>";
-  }
-}
 
 function renderDeadlines() {
   const container = document.getElementById("deadlinesList");
@@ -181,6 +114,53 @@ function renderDeadlines() {
   }).join('');
   const taskCount = document.getElementById("taskCount");
   if (taskCount) taskCount.innerText = deadlines.length;
+}
+function renderUpcomingAssignments() {
+  const container = document.getElementById("upcomingAssignments");
+  if (!container) return;
+  const assignments = deadlines.filter(d => d.type === "Assignment");
+  if (assignments.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span>📝</span><p>No assignments</p></div>`;
+    return;
+  }
+  const sorted = [...assignments].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+  container.innerHTML = sorted.map(d => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+    let urgencyClass = days <= 3 ? 'urgent' : days <= 7 ? 'soon' : 'normal';
+    return `
+      <div class="deadline-item">
+        <div class="deadline-info">
+          <h4>${d.name}</h4>
+          <span>${d.course}</span>
+        </div>
+        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+      </div>`;
+  }).join('');
+}
+
+function renderUpcomingExams() {
+  const container = document.getElementById("upcomingExams");
+  if (!container) return;
+  const exams = deadlines.filter(d => d.type === "Exam");
+  if (exams.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span>📌</span><p>No exams</p></div>`;
+    return;
+  }
+  const sorted = [...exams].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+  container.innerHTML = sorted.map(d => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+    let urgencyClass = days <= 3 ? 'urgent' : days <= 7 ? 'soon' : 'normal';
+    return `
+      <div class="deadline-item">
+        <div class="deadline-info">
+          <h4>${d.name}</h4>
+          <span>${d.course}</span>
+        </div>
+        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+      </div>`;
+  }).join('');
 }
 
 function renderPerformance() {
@@ -216,8 +196,9 @@ function renderVisitCircles() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  renderCourses();
   renderDeadlines();
+  renderUpcomingAssignments();
+  renderUpcomingExams();
   renderPerformance();
   renderVisitCircles();
   const username = localStorage.getItem("loggedInUser") || "Student";
@@ -228,3 +209,4 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="script.js"></script>
 </body>
 </html>
+
