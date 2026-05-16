@@ -11,7 +11,6 @@
 <div class="container" id="main-container">
   <input type="checkbox" id="toggle">
 
-  <!-- LOGIN -->
   <div class="form-box login">
     <h2>Login</h2>
     <input type="text" id="login-username" placeholder="Username" required>
@@ -23,7 +22,6 @@
     </p>
   </div>
 
-  <!-- SIGN UP -->
   <div class="form-box signup">
     <h2>Sign Up</h2>
     <input type="text" id="reg-username" placeholder="Username" required>
@@ -37,7 +35,6 @@
     </p>
   </div>
 
-  <!-- BLUE SIDE -->
   <div class="side">
     <div class="text signup-text">
       <h2>HELLO FRIEND!</h2>
@@ -50,7 +47,6 @@
     
   </div>
 <script>
-// تسجيل مستخدم جديد
 document.getElementById('registerBtn').addEventListener('click', function(){
   const username = document.getElementById('reg-username').value;
   const email = document.getElementById('reg-email').value;
@@ -68,7 +64,6 @@ document.getElementById('registerBtn').addEventListener('click', function(){
   showWelcome(username, "Registration Successful! Redirecting...");
 });
 
-// تسجيل الدخول
 document.getElementById('loginBtn').addEventListener('click', function(){
   const username = document.getElementById('login-username').value;
   const password = document.getElementById('login-password').value;
@@ -87,7 +82,6 @@ document.getElementById('loginBtn').addEventListener('click', function(){
   }
 });
 
-// دالة عرض صفحة الترحيب داخل نفس الصفحة
 function showWelcome(username,message){
   const container = document.getElementById('main-container');
   container.innerHTML = `
@@ -96,7 +90,6 @@ function showWelcome(username,message){
       <p>${message}</p>
     </div>
   `;
-  // بعد 3 ثواني نرجع للصفحة الرئيسية
   setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
 }
 </script>
