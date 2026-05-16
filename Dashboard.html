@@ -14,7 +14,7 @@
   <a href="dashboard.html" class="active">Dashboard</a>
   <a href="courses.html">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-  <a href="availability.html">Availability</a>
+  <a href="weeklyplan.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -58,11 +58,7 @@
     </div>
   </div>
 
-  <div class="bottom-grid">
-    <div class="card">
-      <h3>📖 My Courses</h3>
-      <div id="coursesList"></div>
-    </div>
+  
 
     <div class="card">
       <h3>⏰ Upcoming Deadlines</h3>
@@ -73,27 +69,89 @@
       <h3>📈 Weekly Progress</h3>
       <div class="visit-circles" id="visitCircles"></div>
     </div>
+
+    <div class="card">
+  <h3>📌 Upcoming Exams</h3>
+  <div id="upcomingExams"></div>
+</div>
+
+<div class="card">
+  <h3>📝 Upcoming Assignments</h3>
+  <div id="upcomingAssignments"></div>
+</div>
   </div>
 </div>
 
 <script>
-const courses = JSON.parse(localStorage.getItem("courses")) || [];
+  const courses = JSON.parse(localStorage.getItem("ssp_courses")) || [];
 const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
 const stats = JSON.parse(localStorage.getItem("stats")) || [];
 
-function renderCourses() {
-  const container = document.getElementById("coursesList");
+function renderDeadlines() {
+  const container = document.getElementById("deadlinesList");
   if (!container) return;
-  if (courses.length === 0) {
-    container.innerHTML = `<div class="empty-state"><span>📚</span><p>No courses yet</p></div>`;
-    return;
-  }
-  container.innerHTML = courses.map(c => `
-    <div class="course-item">
-      <span>${c.name}</span>
-      <span class="hours">${c.hours}h</span>
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  let exams = [];
+  let assignments = [];
+
+  deadlines.forEach(d => {
+    const diff = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+
+    if (d.type === "Exam" && diff <= 7 && diff >= 0) {
+      exams.push(d);
+    }
+
+    if (d.type === "Assignment" && diff <= 7 && diff >= 0) {
+      assignments.push(d);
+    }
+  });
+
+  // عرض آخر 3 فقط في القائمة القديمة
+  const sorted = [...deadlines]
+    .sort((a,b) => new Date(a.date) - new Date(b.date))
+    .slice(0,3);
+
+  container.innerHTML = sorted.map(d => `
+    <div class="deadline-item">
+      <div class="deadline-info">
+        <h4>${d.name}</h4>
+        <span>${d.course}</span>
+      </div>
     </div>
-  `).join('');
+  `).join("");
+
+  // تحديث العداد
+  const taskCount = document.getElementById("taskCount");
+  if (taskCount) taskCount.innerText = deadlines.length;
+
+  // 🔥 أهم جزء (الجديد)
+  const examBox = document.getElementById("upcomingExams");
+  const assignBox = document.getElementById("upcomingAssignments");
+
+  if (examBox) {
+    examBox.innerHTML = exams.length
+      ? exams.map(e => `
+        <div class="mini-card">
+          <strong>${e.course}</strong>
+          <p>${e.name} - ${e.date}</p>
+        </div>
+      `).join("")
+      : "<p>No upcoming exams</p>";
+  }
+
+  if (assignBox) {
+    assignBox.innerHTML = assignments.length
+      ? assignments.map(a => `
+        <div class="mini-card">
+          <strong>${a.course}</strong>
+          <p>${a.name} - ${a.date}</p>
+        </div>
+      `).join("")
+      : "<p>No upcoming assignments</p>";
+  }
 }
 
 function renderDeadlines() {

@@ -15,7 +15,7 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="courses.html" class="active">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-  <a href="availability.html">Availability</a>
+  <a href="weeklyplan.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -82,49 +82,136 @@ function updateStats() {
   const totalHours = courses.reduce((sum, c) => sum + c.hours, 0);
   document.getElementById("totalHours").innerText = totalHours + "h";
 }
+function showToast(message, type = "success") {
 
-function render() {
-  const tbody = document.querySelector("#table tbody");
-  tbody.innerHTML = "";
+ const toast = document.createElement("div");
 
-  if (courses.length === 0) {
-    document.getElementById("emptyMsg").style.display = "block";
-    document.querySelector("#table thead").style.display = "none";
-  } else {
-    document.getElementById("emptyMsg").style.display = "none";
-    document.querySelector("#table thead").style.display = "";
-  }
+ toast.className = `toast ${type}`;
+ toast.textContent = message;
 
-  courses.forEach(c => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${c.id}</td>
-      <td>${c.name}</td>
-      <td>${c.hours}h</td>
-      <td>
-        <button class="btn-edit" onclick="editCourse(${c.id})">✏️ Edit</button>
-        <button class="btn-delete" onclick="deleteCourse(${c.id})">🗑️ Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
+ document.body.appendChild(toast);
 
-  updateStats();
+ setTimeout(() => {
+  toast.classList.add("show");
+ }, 100);
+
+ setTimeout(() => {
+  toast.classList.remove("show");
+
+  setTimeout(() => {
+   toast.remove();
+  }, 300);
+
+ }, 3000);
 }
 
+/*function render() {
+ const tbody = document.querySelector("#table tbody");
+ tbody.innerHTML = "";
+
+ if (courses.length === 0) {
+  document.getElementById("emptyMsg").style.display = "block";
+  document.querySelector("#table thead").style.display = "none";
+ } else {
+  document.getElementById("emptyMsg").style.display = "none";
+  document.querySelector("#table thead").style.display = "";
+ }
+
+ courses.forEach(c => {
+  const row = document.createElement("tr");
+<td>${c.id}</td> بدال هذا  لان هذا حتى لو حذفت يعطني اي دي جديد 
+  row.innerHTML = `
+   
+   <td>${index + 1}</td>
+
+   <td>
+    <span 
+      class="editable-course"
+      ondblclick="enableEdit(${c.id}, this)"
+      title="Double click to edit"
+    >
+      ${c.name}
+    </span>
+   </td>
+
+   <td>${c.hours}h</td>
+
+   <td>
+    <button class="btn-delete" onclick="deleteCourse(${c.id})">
+      🗑 Delete
+    </button>
+   </td>
+  `;
+
+  tbody.appendChild(row);
+ });
+
+ updateStats();
+}**/
+function render() {
+
+ const tbody = document.querySelector("#table tbody");
+
+ tbody.innerHTML = "";
+
+ if (courses.length === 0) {
+
+  document.getElementById("emptyMsg").style.display = "block";
+
+  document.querySelector("#table thead").style.display = "none";
+
+ } else {
+
+  document.getElementById("emptyMsg").style.display = "none";
+
+  document.querySelector("#table thead").style.display = "";
+
+ }
+
+ courses.forEach((c, index) => {
+
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+   <td>${index + 1}</td>
+
+   <td>
+    <span 
+      class="editable-course"
+      ondblclick="enableEdit(${c.id}, this)"
+    >
+      ${c.name}
+    </span>
+   </td>
+
+   <td>${c.hours}h</td>
+
+   <td>
+    <button class="btn-delete" onclick="deleteCourse(${c.id})">
+      🗑 Delete
+    </button>
+   </td>
+  `;
+
+  tbody.appendChild(row);
+
+ });
+
+ updateStats();
+}
 function addCourse() {
   const name = document.getElementById("courseName").value.trim();
   const hours = parseInt(document.getElementById("hours").value);
 
-  if (!name || isNaN(hours) || hours <= 0) {
-    alert("Please enter valid course name and hours");
-    return;
-  }
+if (!name || isNaN(hours) || hours <= 0) {
+ showToast("Please enter valid course name and hours", "error");
+ return;
+}
 
-  if (isDuplicate(name)) {
-    alert("This course already exists!");
-    return;
-  }
+if (isDuplicate(name)) {
+ showToast("This course already exists!", "error");
+ return;
+}
 
   courses.push({ id: nextId++, name, hours });
   localStorage.setItem("courses", JSON.stringify(courses));
@@ -136,40 +223,69 @@ function addCourse() {
 }
 
 function deleteCourse(id) {
-  if (confirm("Are you sure you want to delete this course?")) {
-    courses = courses.filter(c => c.id !== id);
-    localStorage.setItem("courses", JSON.stringify(courses));
-    render();
-  }
+
+ const confirmed = confirm("Delete this course?");
+
+ if (!confirmed) return;
+
+ courses = courses.filter(c => c.id !== id);
+
+ localStorage.setItem("courses", JSON.stringify(courses));
+
+ showToast("Course deleted successfully", "success");
+
+ render();
 }
 
-function editCourse(id) {
-  const c = courses.find(x => x.id === id);
+function enableEdit(id, element) {
 
-  let newName = prompt("Enter new course name:", c.name);
-  if (newName === null) return;
+ const course = courses.find(c => c.id === id);
 
-  let newHours = prompt("Enter new credit hours:", c.hours);
-  if (newHours === null) return;
+ element.innerHTML = `
+  <input 
+    type="text" 
+    id="editInput-${id}" 
+    value="${course.name}"
+    class="edit-input"
+    onblur="saveCourse(${id})"
+    onkeypress="handleKey(event, ${id})"
+    autofocus
+  >
+ `;
+}
 
-  newName = newName.trim();
-  const hoursVal = parseInt(newHours);
+function handleKey(event, id) {
+ if (event.key === "Enter") {
+  saveCourse(id);
+ }
+}
 
-  if (!newName || isNaN(hoursVal) || hoursVal <= 0) {
-    alert("Invalid input");
-    return;
-  }
+function saveCourse(id) {
 
-  if (isDuplicate(newName, id)) {
-    alert("This course already exists!");
-    return;
-  }
+ const input = document.getElementById(`editInput-${id}`);
+ let newName = input.value.trim();
 
-  c.name = newName;
-  c.hours = hoursVal;
+ const course = courses.find(c => c.id === id);
 
-  localStorage.setItem("courses", JSON.stringify(courses));
+ if (!newName) {
+  showToast("Course name cannot be empty", "error");
   render();
+  return;
+ }
+
+ if (isDuplicate(newName, id)) {
+  showToast("This course already exists!", "error");
+  render();
+  return;
+ }
+
+ course.name = newName;
+
+ localStorage.setItem("courses", JSON.stringify(courses));
+
+ showToast("Course updated successfully", "success");
+
+ render();
 }
 
 render();
