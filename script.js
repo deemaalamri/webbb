@@ -260,12 +260,16 @@ function isTaskAvailableForPlanDay(task, dayName) {
   if (!due) return false;
 
   const today = startOfToday();
-if (due <= today) return false;
-  const weekDates = getCurrentWeekDates();
-  const planDay = weekDates[dayName];
-  if (!planDay) return false;
+  // Keep the task until its deadline day, then remove it from the days after.
+  // Example: if the deadline is Monday, it appears on Sunday/Monday only,
+  // and it will not appear on Tuesday, Wednesday, etc.
+  if (due < today) return false;
 
-  return planDay < due;
+  const planDayIndex = getDayIndex(dayName);
+  const dueDayIndex = due.getDay();
+  if (planDayIndex === -1) return false;
+
+  return planDayIndex <= dueDayIndex;
 }
 
 function getTaskDisplayName(task) {
@@ -687,12 +691,6 @@ function generateMergedWeeklyPlan() {
       item.appendChild(checkItem);
       sessionList.appendChild(item);
     }
-
-    dayCard.appendChild(sessionList);
-    container.appendChild(dayCard);
-  });
-}
-
 
     dayCard.appendChild(sessionList);
     container.appendChild(dayCard);
