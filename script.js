@@ -1,13 +1,31 @@
+
+// ===== صفحة نجاح مؤقتة =====
 function showSuccessAndRedirect(name, nextPage, action = "Registration Successful! Redirecting...") {
   document.body.innerHTML = `
-    <div class="success-redirect-page">
-      <h1>Welcome, ${name} 🎉</h1>
-      <p>${action}</p>
+    <div style="
+      width:100%;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      background:linear-gradient(135deg,#e9f1ff,#cfe0ff);
+      font-family:'Poppins',sans-serif;">
+      
+      <h1 style="color:#1e3f7f;font-size:28px;font-weight:600;">
+        Welcome, ${name} 🎉
+      </h1>
+      <p style="font-size:18px;color:#333;margin-top:10px;">
+        ${action}
+      </p>
     </div>
   `;
+  // يحجز الوقت للانتقال بعد 3 ثواني
   setTimeout(() => { window.location.href = nextPage; }, 3000);
 }
 
+// ===== تسجيل المستخدم =====
 function toggleForm(signupMode){
   document.getElementById("signupCard").style.display = signupMode?"block":"none";
   document.getElementById("loginCard").style.display = signupMode?"none":"block";
@@ -22,6 +40,7 @@ function signUpUser() {
   let users = JSON.parse(localStorage.getItem("ssp_users") || "[]");
   if (users.find(u => u.email === email)) return alert("هذا البريد مسجل مسبقاً");
 
+  // نحفظ البيانات مع الجنس
   users.push({ email, pass, gender });
   localStorage.setItem("ssp_users", JSON.stringify(users));
   localStorage.setItem("ssp_currentUser", email);
@@ -42,16 +61,18 @@ function loginUser() {
 
   localStorage.setItem("ssp_currentUser", email);
 
+  // ✨ صفحة الترحيب تظهر هنا
   const name = email.split('@')[0];
   showSuccessAndRedirect(name, "dashboard.html", "Welcome back! Redirecting...");
 }
 
 
 
-function logoutUser(){localStorage.removeItem("ssp_currentUser");window.location.href="singUp.html";}
+function logoutUser(){localStorage.removeItem("ssp_currentUser");window.location.href="signUp.html";}
 function requireLogin(){if(!localStorage.getItem("ssp_currentUser"))window.location.href="signUp.html";}
 
 
+// ===== Courses =====
 function addCourse(){
   const name=document.getElementById("courseName").value.trim();
   const hrs=parseFloat(document.getElementById("creditHours").value)||0;
@@ -79,6 +100,7 @@ function loadCourses(){
   localStorage.setItem("ssp_totalCourses",list.length);
 }
 
+// ===== Deadlines =====
 function addDeadline(){
   const type=document.getElementById("deadlineType").value;
   const course=document.getElementById("deadlineCourse").value.trim();
@@ -110,6 +132,7 @@ function loadDeadlines(){
   localStorage.setItem("ssp_totalDeadlines",list.length);
 }
 
+// ===== Availability =====
 function loadAvailability(){
   requireLogin();
   const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -132,6 +155,7 @@ function saveAvailability(){
   alert("تم الحفظ ("+total+" ساعات)");
 }
 
+// ===== Dashboard =====
 function loadDashboard(){
   requireLogin();
   const totalHours=localStorage.getItem("ssp_totalHours")||0;
@@ -143,6 +167,7 @@ function loadDashboard(){
   document.getElementById("weeklyProgressText").textContent=percent.toFixed(0)+"%";
 }
 
+// ===== Statistics =====
 function loadStatistics(){
   requireLogin();
   const body=document.getElementById("statsBody");
@@ -154,23 +179,6 @@ function loadStatistics(){
     body.innerHTML+=`<tr><td>${day}</td><td>${hrs}</td><td>${status}</td></tr>`;
   });
 }
-let modalCallback = null;
-
-function showConfirm(message, callback) {
-  document.getElementById("modalMessage").textContent = message;
-  document.getElementById("confirmModal").classList.add("active");
-  modalCallback = callback;
-}
-
-function closeModal() {
-  document.getElementById("confirmModal").classList.remove("active");
-  modalCallback = null;
-}
-
-function confirmAction() {
-  closeModal();
-  if (modalCallback) modalCallback();
-}
 
 
 
@@ -186,6 +194,7 @@ function confirmAction() {
 
 
 
+// ===== Shared profile =====
 function loadUserProfile() {
   const username = localStorage.getItem("loggedInUser") || localStorage.getItem("ssp_currentUser") || "Student";
   const name = username.includes("@") ? username.split("@")[0] : username;
@@ -199,8 +208,8 @@ function loadUserProfile() {
 }
 
 function getWeeklyPlanData() {
-  const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
-  const availability = JSON.parse(localStorage.getItem("availability") || "{}");
+  const deadlines = JSON.parse(localStorage.getItem("deadlines") || localStorage.getItem("ssp_deadlines") || "[]");
+  const availability = JSON.parse(localStorage.getItem("availability") || localStorage.getItem("ssp_availability") || "{}");
   return { deadlines, availability };
 }
 
@@ -247,11 +256,12 @@ function isTaskAvailableForPlanDay(task, dayName) {
   const today = startOfToday();
   if (due < today) return false;
 
-  const weekDates = getCurrentWeekDates();
-  const planDay = weekDates[dayName];
-  if (!planDay) return false;
+  const dayIndex = getDayIndex(dayName);
+  const dueDayIndex = due.getDay();
 
-  return planDay < due;
+  // A task must appear only until its deadline day.
+  // Example: deadline on Monday => show on Sunday/Monday only, not Tuesday or later.
+  return dayIndex !== -1 && dayIndex <= dueDayIndex;
 }
 
 function getTaskDisplayName(task) {
@@ -337,49 +347,8 @@ function createTaskCheckbox(taskId, checked = false) {
     setTaskState(taskId, checkbox.checked);
     const wrapper = checkbox.closest(".task-check-item");
     if (wrapper) wrapper.classList.toggle("is-complete", checkbox.checked);
-
-    if (!checkbox.checked) {
-      const missedTasks = JSON.parse(localStorage.getItem("missedTasks") || "[]");
-      if (!missedTasks.includes(taskId)) {
-        missedTasks.push(taskId);
-        localStorage.setItem("missedTasks", JSON.stringify(missedTasks));
-      }
-      rescheduleAfterMiss();
-    } else {
-      let missedTasks = JSON.parse(localStorage.getItem("missedTasks") || "[]");
-      missedTasks = missedTasks.filter(id => id !== taskId);
-      localStorage.setItem("missedTasks", JSON.stringify(missedTasks));
-    }
   });
   return checkbox;
-}
-function rescheduleAfterMiss() {
-  const missedTasks = JSON.parse(localStorage.getItem("missedTasks") || "[]");
-  if (missedTasks.length === 0) return;
-
-  const availability = JSON.parse(localStorage.getItem("availability") || "{}");
-  const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
-
-  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-
-  let extraSessions = missedTasks.length;
-
-  while (extraSessions > 0) {
-  days.forEach(day => {
-    if (extraSessions <= 0) return;
-    const current = Number(availability[day] || 0);
-    availability[day] = current + 1;
-    extraSessions--;
-  });
-}
-
-  localStorage.setItem("availability", JSON.stringify(availability));
-
-  const planContainer = document.getElementById("weeklyPlan");
-  if (planContainer) {
-    generateMergedWeeklyPlan();
-    showToast("Schedule updated due to missed session!", "error");
-  }
 }
 
 function createTaskCheckItem(taskId, mainText, subText = "") {
@@ -504,10 +473,12 @@ function renderWeeklyPlanPage() {
 }
 
 
+// ===== Availability + Weekly Plan (Merged Page) =====
 function initMergedAvailabilityPage() {
   if (!document.getElementById("availabilityTable")) return;
 
   const savedAvailability =
+    JSON.parse(localStorage.getItem("ssp_availability")) ||
     JSON.parse(localStorage.getItem("availability")) || {
       Sunday: 0, Monday: 0, Tuesday: 0, Wednesday: 0,
       Thursday: 0, Friday: 0, Saturday: 0
@@ -546,14 +517,15 @@ function getMergedAvailability() {
 function saveMergedAvailability() {
   const availability = getMergedAvailability();
   localStorage.setItem("availability", JSON.stringify(availability));
+  localStorage.setItem("ssp_availability", JSON.stringify(availability));
   renderAvailabilityStats();
   renderAvailabilityBars();
-  showToast("Availability saved successfully!");
+  alert("Availability saved successfully!");
 }
 
 function renderAvailabilityStats() {
   const availability =
-    JSON.parse(localStorage.getItem("availability")) ||
+    JSON.parse(localStorage.getItem("ssp_availability")) ||
     getMergedAvailability();
 
   const values = Object.values(availability);
@@ -572,7 +544,7 @@ function renderAvailabilityStats() {
 
 function renderAvailabilityBars() {
   const availability =
-    JSON.parse(localStorage.getItem("availability")) ||
+    JSON.parse(localStorage.getItem("ssp_availability")) ||
     getMergedAvailability();
 
   const container = document.getElementById("visualBars");
@@ -595,8 +567,13 @@ function renderAvailabilityBars() {
 function generateMergedWeeklyPlan() {
   saveMergedAvailability();
 
-  const availability = JSON.parse(localStorage.getItem("availability")) || {};
-  const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
+  const availability =
+    JSON.parse(localStorage.getItem("ssp_availability")) ||
+    JSON.parse(localStorage.getItem("availability")) || {};
+
+  const deadlines =
+    JSON.parse(localStorage.getItem("ssp_deadlines")) ||
+    JSON.parse(localStorage.getItem("deadlines")) || [];
 
   const container = document.getElementById("weeklyPlan");
   if (!container) return;
@@ -678,4 +655,3 @@ function generateMergedWeeklyPlan() {
     container.appendChild(dayCard);
   });
 }
-
