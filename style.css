@@ -1275,3 +1275,77 @@ select:focus {
   color: #333;
   margin-top: 10px;
 }
+.plan-day-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.plan-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.plan-day-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.plan-session-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.plan-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-session-item {
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.plan-empty {
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.task-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.task-check-main {
+  font-size: 14px;
+  color: #fff;
+}
+
+.task-check-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  display: block;
+}
+
+.task-check-item.is-complete .task-check-main {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.task-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
