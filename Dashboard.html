@@ -80,6 +80,27 @@
 </div>
 
 <script>
+  function loadUserProfile(){
+
+  const username = localStorage.getItem("loggedInUser");
+
+  if(!username){
+    window.location.href = "index.html";
+    return;
+  }
+
+  document.getElementById("welcome-user").textContent = `Hello, ${username}!`;
+  document.getElementById("userNameDisplay").textContent = username;
+}
+
+/* LOGOUT */
+function logout(){
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
+}
+
+/* DATA */
+const courses = JSON.parse(localStorage.getItem("courses")) || [];
 const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
 const stats = JSON.parse(localStorage.getItem("stats")) || [];
 
