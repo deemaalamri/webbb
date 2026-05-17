@@ -13,6 +13,7 @@ function showToast(message, type = "success") {
     }, 300);
   }, 3000);
 }
+
 function showSuccessAndRedirect(name, nextPage, action = "Registration Successful! Redirecting...") {
   document.body.innerHTML = `
     <div class="success-redirect-page">
@@ -23,152 +24,6 @@ function showSuccessAndRedirect(name, nextPage, action = "Registration Successfu
   setTimeout(() => { window.location.href = nextPage; }, 3000);
 }
 
-function toggleForm(signupMode){
-  document.getElementById("signupCard").style.display = signupMode?"block":"none";
-  document.getElementById("loginCard").style.display = signupMode?"none":"block";
-}
-function signUpUser() {
-  const email = document.getElementById("signupEmail").value.trim();
-  const pass = document.getElementById("signupPassword").value.trim();
-  const gender = document.getElementById("gender").value; // ← الجنس
-
-  if (!email || !pass) return alert("املأ جميع الحقول");
-
-  let users = JSON.parse(localStorage.getItem("ssp_users") || "[]");
-  if (users.find(u => u.email === email)) return alert("هذا البريد مسجل مسبقاً");
-
-  users.push({ email, pass, gender });
-  localStorage.setItem("ssp_users", JSON.stringify(users));
-  localStorage.setItem("ssp_currentUser", email);
-
-  const name = email.split("@")[0];
-  showSuccessAndRedirect(name, "dashboard.html", "تم إنشاء الحساب بنجاح! سيتم نقلك بعد لحظات...");
-}
-
-
-
-
-function loginUser() {
-  const email = document.getElementById("loginEmail").value.trim();
-  const pass = document.getElementById("loginPassword").value.trim();
-  const users = JSON.parse(localStorage.getItem("ssp_users") || "[]");
-  const user = users.find(u => u.email === email && u.pass === pass);
-  if (!user) return alert("بيانات غير صحيحة");
-
-  localStorage.setItem("ssp_currentUser", email);
-
-  const name = email.split('@')[0];
-  showSuccessAndRedirect(name, "dashboard.html", "Welcome back! Redirecting...");
-}
-
-
-
-function logoutUser(){localStorage.removeItem("ssp_currentUser");window.location.href="singUp.html";}
-function requireLogin(){if(!localStorage.getItem("ssp_currentUser"))window.location.href="signUp.html";}
-
-
-function addCourse(){
-  const name=document.getElementById("courseName").value.trim();
-  const hrs=parseFloat(document.getElementById("creditHours").value)||0;
-  if(!name)return alert("أدخل اسم المقرر");
-  let list=JSON.parse(localStorage.getItem("ssp_courses")||"[]");
-  list.push({id:Date.now(),name,hrs});
-  localStorage.setItem("ssp_courses",JSON.stringify(list));
-  loadCourses();
-}
-function deleteCourse(id){
-  let list=JSON.parse(localStorage.getItem("ssp_courses")||"[]");
-  list=list.filter(c=>c.id!==id);
-  localStorage.setItem("ssp_courses",JSON.stringify(list));
-  loadCourses();
-}
-function loadCourses(){
-  requireLogin();
-  const body=document.getElementById("courseBody");
-  const list=JSON.parse(localStorage.getItem("ssp_courses")||"[]");
-  body.innerHTML="";
-  list.forEach((c,i)=>{
-    body.innerHTML+=`<tr><td>${i+1}</td><td>${c.name}</td><td>${c.hrs}</td>
-    <td><button class='btn-delete' onclick='deleteCourse(${c.id})'>❌</button></td></tr>`;
-  });
-  localStorage.setItem("ssp_totalCourses",list.length);
-}
-
-function addDeadline(){
-  const type=document.getElementById("deadlineType").value;
-  const course=document.getElementById("deadlineCourse").value.trim();
-  const name=document.getElementById("deadlineName").value.trim();
-  const date=document.getElementById("deadlineDate").value;
-  if(!course||!name||!date)return alert("املأ كل الحقول");
-  let list=JSON.parse(localStorage.getItem("ssp_deadlines")||"[]");
-  list.push({id:Date.now(),type,course,name,date});
-  localStorage.setItem("ssp_deadlines",JSON.stringify(list));
-  loadDeadlines();
-}
-function deleteDeadline(id){
-  let list=JSON.parse(localStorage.getItem("ssp_deadlines")||"[]");
-  list=list.filter(d=>d.id!==id);
-  localStorage.setItem("ssp_deadlines",JSON.stringify(list));
-  loadDeadlines();
-}
-function loadDeadlines(){
-  requireLogin();
-  const body=document.getElementById("deadlineBody");
-  const list=JSON.parse(localStorage.getItem("ssp_deadlines")||"[]");
-  body.innerHTML="";
-  list.forEach(d=>{
-    const daysLeft=Math.ceil((new Date(d.date)-new Date())/(1000*60*60*24));
-    body.innerHTML+=`<tr><td>${d.type}</td><td>${d.course}</td><td>${d.name}</td>
-    <td>${d.date}</td><td>${daysLeft>0?daysLeft:"0"}</td>
-    <td><button class='btn-delete' onclick='deleteDeadline(${d.id})'>❌</button></td></tr>`;
-  });
-  localStorage.setItem("ssp_totalDeadlines",list.length);
-}
-
-function loadAvailability(){
-  requireLogin();
-  const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const table=document.getElementById("availabilityTable");
-  table.innerHTML="";
-  const data=JSON.parse(localStorage.getItem("ssp_availability")||"{}");
-  days.forEach(d=>{
-    table.innerHTML+=`<tr><td>${d}</td><td><input id="${d}" type="number" min="0" value="${data[d]||0}"></td></tr>`;
-  });
-}
-function saveAvailability(){
-  const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  let total=0, obj={};
-  days.forEach(d=>{
-    const val=parseFloat(document.getElementById(d).value)||0;
-    obj[d]=val; total+=val;
-  });
-  localStorage.setItem("ssp_availability",JSON.stringify(obj));
-  localStorage.setItem("ssp_totalHours",total);
-  alert("تم الحفظ ("+total+" ساعات)");
-}
-
-function loadDashboard(){
-  requireLogin();
-  const totalHours=localStorage.getItem("ssp_totalHours")||0;
-  document.getElementById("weeklyHours").textContent=totalHours+"h";
-  document.getElementById("totalCourses").textContent=localStorage.getItem("ssp_totalCourses")||0;
-  document.getElementById("totalDeadlines").textContent=localStorage.getItem("ssp_totalDeadlines")||0;
-  const percent=Math.min((totalHours/40)*100,100);
-  document.getElementById("weeklyProgressBar").style.width=percent+"%";
-  document.getElementById("weeklyProgressText").textContent=percent.toFixed(0)+"%";
-}
-
-function loadStatistics(){
-  requireLogin();
-  const body=document.getElementById("statsBody");
-  const avail=JSON.parse(localStorage.getItem("ssp_availability")||"{}");
-  body.innerHTML="";
-  Object.keys(avail).forEach(day=>{
-    const hrs=avail[day];
-    const status=hrs>0?"✅":"—";
-    body.innerHTML+=`<tr><td>${day}</td><td>${hrs}</td><td>${status}</td></tr>`;
-  });
-}
 let modalCallback = null;
 
 function showConfirm(message, callback) {
@@ -187,26 +42,11 @@ function confirmAction() {
   if (modalCallback) modalCallback();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function loadUserProfile() {
   const username = localStorage.getItem("loggedInUser") || localStorage.getItem("ssp_currentUser") || "Student";
   const name = username.includes("@") ? username.split("@")[0] : username;
   const nameEls = document.querySelectorAll("#userNameDisplay");
   nameEls.forEach(el => el.textContent = name);
-
   const avatar = document.getElementById("userAvatar");
   if (avatar && !avatar.getAttribute("src")) {
     avatar.setAttribute("src", "female.png");
@@ -218,7 +58,6 @@ function getWeeklyPlanData() {
   const availability = JSON.parse(localStorage.getItem("availability") || "{}");
   return { deadlines, availability };
 }
-
 
 function parseLocalDate(dateString) {
   if (!dateString) return null;
@@ -241,7 +80,6 @@ function getCurrentWeekDates() {
   const today = startOfToday();
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - today.getDay());
-
   return days.reduce((map, day, index) => {
     const date = new Date(sunday);
     date.setDate(sunday.getDate() + index);
@@ -250,26 +88,15 @@ function getCurrentWeekDates() {
   }, {});
 }
 
-
-function getDayIndex(dayName) {
-  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(dayName);
-}
-
 function isTaskAvailableForPlanDay(task, dayName) {
   const due = parseLocalDate(task.date);
   if (!due) return false;
-
   const today = startOfToday();
-  // Keep the task until its deadline day, then remove it from the days after.
-  // Example: if the deadline is Monday, it appears on Sunday/Monday only,
-  // and it will not appear on Tuesday, Wednesday, etc.
   if (due < today) return false;
-
-  const planDayIndex = getDayIndex(dayName);
-  const dueDayIndex = due.getDay();
-  if (planDayIndex === -1) return false;
-
-  return planDayIndex <= dueDayIndex;
+  const weekDates = getCurrentWeekDates();
+  const planDate = weekDates[dayName];
+  if (!planDate) return false;
+  return planDate <= due;
 }
 
 function getTaskDisplayName(task) {
@@ -289,52 +116,107 @@ function getUpcomingDeadlines(deadlines) {
 function renderUpcomingReminder() {
   const reminder = document.getElementById("upcomingReminder");
   if (!reminder) return;
-
   const { deadlines } = getWeeklyPlanData();
   const upcoming = getUpcomingDeadlines(deadlines);
-
   if (upcoming.length === 0) {
     reminder.textContent = "✅ No upcoming tasks or deadlines.";
     return;
   }
-
   const names = upcoming.slice(0, 3).map(task => {
     const label = task.name || task.examName || task.course || "Task";
     const course = task.course ? ` - ${task.course}` : "";
     return `${label}${course}`;
-  }).join(", " );
-
+  }).join(", ");
   const extra = upcoming.length > 3 ? ` and ${upcoming.length - 3} more` : "";
   reminder.textContent = `⚠️ Reminder: Upcoming tasks: ${names}${extra}.`;
 }
 
-function buildWeeklyPlan() {
-  const { deadlines, availability } = getWeeklyPlanData();
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const weekDates = getCurrentWeekDates();
-  const sortedDeadlines = getUpcomingDeadlines(deadlines);
-  const plan = {};
-
-  days.forEach(day => {
-    const slots = Number(availability[day] || 0);
-    const availableForDay = sortedDeadlines.filter(task => isTaskAvailableForPlanDay(task, day));
-    plan[day] = [];
-
-    for (let i = 0; i < slots; i++) {
-      if (availableForDay.length === 0) break;
-      const task = availableForDay[i % availableForDay.length];
-      plan[day].push({
-        course: task.course || "Study",
-        title: getTaskDisplayName(task),
-        date: task.date || "",
-        duration: "1h"
-      });
-    }
-  });
-
-  return { plan, deadlines: sortedDeadlines, availability };
+function getRequiredHours(task) {
+  return task.estimatedHours && task.estimatedHours > 0 ? task.estimatedHours : 1;
 }
 
+function getPriorityLabel(task) {
+  const today = startOfToday();
+  const due = parseLocalDate(task.date);
+  if (!due) return "Low";
+  const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+  if (daysLeft <= 3) return "High";
+  if (daysLeft <= 7) return "Medium";
+  return "Low";
+}
+
+function buildSmartPlan(deadlines, availability) {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const upcoming = getUpcomingDeadlines(deadlines);
+  const taskBudget = {};
+  upcoming.forEach(t => {
+    taskBudget[t.id] = getRequiredHours(t);
+  });
+  const plan = {};
+  days.forEach(d => { plan[d] = []; });
+  days.forEach(day => {
+    let slotsLeft = Number(availability[day] || 0);
+    if (slotsLeft <= 0) return;
+    const availableForDay = upcoming.filter(t =>
+      isTaskAvailableForPlanDay(t, day) && (taskBudget[t.id] || 0) > 0
+    );
+    if (availableForDay.length === 0) return;
+    const today = startOfToday();
+    let i = 0;
+    while (slotsLeft > 0 && i < availableForDay.length) {
+      const task = availableForDay[i];
+      const due = parseLocalDate(task.date);
+      const daysLeft = due ? Math.max(Math.ceil((due - today) / (1000 * 60 * 60 * 24)), 0) : 999;
+      const sameDateTasks = availableForDay.filter(t => t.date === task.date && (taskBudget[t.id] || 0) > 0);
+      if (sameDateTasks.length > 1) {
+        const totalBudget = sameDateTasks.reduce((s, t) => s + taskBudget[t.id], 0);
+        const sharedSlots = Math.min(slotsLeft, totalBudget);
+        sameDateTasks.forEach(t => {
+          const share = Math.round((taskBudget[t.id] / totalBudget) * sharedSlots);
+          const actual = Math.min(share, taskBudget[t.id], slotsLeft);
+          for (let h = 0; h < actual; h++) {
+            plan[day].push({
+              course: t.course || "Study",
+              title: getTaskDisplayName(t),
+              date: t.date || "",
+              duration: "1h",
+              daysLeft,
+              priority: getPriorityLabel(t),
+              taskId: t.id
+            });
+          }
+          taskBudget[t.id] -= actual;
+          slotsLeft -= actual;
+        });
+        i += sameDateTasks.length;
+      } else {
+        const hoursToAssign = Math.min(taskBudget[task.id], slotsLeft);
+        for (let h = 0; h < hoursToAssign; h++) {
+          plan[day].push({
+            course: task.course || "Study",
+            title: getTaskDisplayName(task),
+            date: task.date || "",
+            duration: "1h",
+            daysLeft,
+            priority: getPriorityLabel(task),
+            taskId: task.id
+          });
+        }
+        taskBudget[task.id] -= hoursToAssign;
+        slotsLeft -= hoursToAssign;
+        i++;
+      }
+    }
+  });
+  return plan;
+}
+
+function buildWeeklyPlan() {
+  const { deadlines, availability } = getWeeklyPlanData();
+  const sortedDeadlines = getUpcomingDeadlines(deadlines);
+  const plan = buildSmartPlan(deadlines, availability);
+  return { plan, deadlines: sortedDeadlines, availability };
+}
 
 function getTaskStateMap() {
   return JSON.parse(localStorage.getItem("ssp_completedTasks") || "{}");
@@ -355,7 +237,6 @@ function createTaskCheckbox(taskId, checked = false) {
     setTaskState(taskId, checkbox.checked);
     const wrapper = checkbox.closest(".task-check-item");
     if (wrapper) wrapper.classList.toggle("is-complete", checkbox.checked);
-
     if (!checkbox.checked) {
       const missedTasks = JSON.parse(localStorage.getItem("missedTasks") || "[]");
       if (!missedTasks.includes(taskId)) {
@@ -371,28 +252,22 @@ function createTaskCheckbox(taskId, checked = false) {
   });
   return checkbox;
 }
+
 function rescheduleAfterMiss() {
   const missedTasks = JSON.parse(localStorage.getItem("missedTasks") || "[]");
   if (missedTasks.length === 0) return;
-
   const availability = JSON.parse(localStorage.getItem("availability") || "{}");
-  const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
-
   const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-
   let extraSessions = missedTasks.length;
-
   while (extraSessions > 0) {
-  days.forEach(day => {
-    if (extraSessions <= 0) return;
-    const current = Number(availability[day] || 0);
-    availability[day] = current + 1;
-    extraSessions--;
-  });
-}
-
+    days.forEach(day => {
+      if (extraSessions <= 0) return;
+      const current = Number(availability[day] || 0);
+      availability[day] = current + 1;
+      extraSessions--;
+    });
+  }
   localStorage.setItem("availability", JSON.stringify(availability));
-
   const planContainer = document.getElementById("weeklyPlan");
   if (planContainer) {
     generateMergedWeeklyPlan();
@@ -405,145 +280,40 @@ function createTaskCheckItem(taskId, mainText, subText = "") {
   const wrapper = document.createElement("label");
   wrapper.className = "task-check-item";
   if (completedTasks[taskId]) wrapper.classList.add("is-complete");
-
   const checkbox = createTaskCheckbox(taskId, completedTasks[taskId] || false);
-
   const textWrap = document.createElement("div");
   textWrap.className = "task-check-text";
-
   const main = document.createElement("span");
   main.className = "task-check-main";
   main.textContent = mainText;
-
   textWrap.appendChild(main);
-
   if (subText) {
     const sub = document.createElement("small");
     sub.className = "task-check-sub";
     sub.textContent = subText;
     textWrap.appendChild(sub);
   }
-
   wrapper.appendChild(checkbox);
   wrapper.appendChild(textWrap);
   return wrapper;
 }
 
-function generateWeeklyPlan(containerId = "weeklyPlan") {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const { plan } = buildWeeklyPlan();
-  container.innerHTML = "";
-
-  Object.keys(plan).forEach(day => {
-    const dayBlock = document.createElement("div");
-    dayBlock.className = "plan-day-block";
-
-    const title = document.createElement("h4");
-    title.textContent = day;
-    dayBlock.appendChild(title);
-
-    if (plan[day].length === 0) {
-      const free = document.createElement("p");
-      free.className = "plan-free";
-      free.textContent = "Free";
-      dayBlock.appendChild(free);
-    } else {
-      const ul = document.createElement("ul");
-      ul.className = "plan-inline-list";
-      plan[day].forEach((item, index) => {
-        const li = document.createElement("li");
-        const taskId = `weekly-${day}-${index}-${item.course}-${item.title || ""}`;
-        li.appendChild(createTaskCheckItem(taskId, `${item.title} (${item.duration})`, item.course));
-        ul.appendChild(li);
-      });
-      dayBlock.appendChild(ul);
-    }
-
-    container.appendChild(dayBlock);
-  });
-}
-
-function renderWeeklyPlanPage() {
-  const grid = document.getElementById("weeklyPlanGrid");
-  if (!grid) return;
-
-  const { plan, deadlines } = buildWeeklyPlan();
-  grid.innerHTML = "";
-
-  let sessions = 0;
-  let activeDays = 0;
-  const counts = {};
-
-  Object.entries(plan).forEach(([day, items]) => {
-    if (items.length > 0) activeDays++;
-    sessions += items.length;
-
-    const card = document.createElement("div");
-    card.className = "plan-card";
-
-    const header = document.createElement("div");
-    header.className = "plan-card-header";
-    header.innerHTML = `<h3>${day}</h3><span>${items.length} session${items.length === 1 ? '' : 's'}</span>`;
-    card.appendChild(header);
-
-    if (items.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "plan-empty";
-      empty.textContent = "Free day";
-      card.appendChild(empty);
-    } else {
-      items.forEach((item, index) => {
-        counts[item.course] = (counts[item.course] || 0) + 1;
-        const row = document.createElement("div");
-        row.className = "plan-session";
-
-        const taskId = `planpage-${day}-${index}-${item.course}-${item.title || ""}`;
-        const checkItem = createTaskCheckItem(taskId, `${item.title} (${item.duration})`, item.course);
-
-        row.appendChild(checkItem);
-        card.appendChild(row);
-      });
-    }
-
-    grid.appendChild(card);
-  });
-
-  const planSessions = document.getElementById("planSessions");
-  const planActiveDays = document.getElementById("planActiveDays");
-  const planTopCourse = document.getElementById("planTopCourse");
-  if (planSessions) planSessions.textContent = sessions;
-  if (planActiveDays) planActiveDays.textContent = activeDays;
-  if (planTopCourse) {
-    const top = Object.keys(counts).sort((a,b) => counts[b]-counts[a])[0] || (deadlines[0]?.course || '-');
-    planTopCourse.textContent = top;
-  }
-}
-
-
 function initMergedAvailabilityPage() {
   if (!document.getElementById("availabilityTable")) return;
-
-  const savedAvailability =
-    JSON.parse(localStorage.getItem("availability")) || {
-      Sunday: 0, Monday: 0, Tuesday: 0, Wednesday: 0,
-      Thursday: 0, Friday: 0, Saturday: 0
-    };
-
+  const savedAvailability = JSON.parse(localStorage.getItem("availability")) || {
+    Sunday: 0, Monday: 0, Tuesday: 0, Wednesday: 0,
+    Thursday: 0, Friday: 0, Saturday: 0
+  };
   const table = document.getElementById("availabilityTable");
   for (let i = 1; i < table.rows.length; i++) {
     const day = table.rows[i].cells[0].innerText.trim();
     table.rows[i].cells[1].innerText = savedAvailability[day] || 0;
   }
-
   renderAvailabilityStats();
   renderAvailabilityBars();
   renderUpcomingReminder();
-
   const saveBtn = document.getElementById("saveAvailability");
   const planBtn = document.getElementById("generateWeeklyPlanBtn");
-
   if (saveBtn) saveBtn.onclick = saveMergedAvailability;
   if (planBtn) planBtn.onclick = generateMergedWeeklyPlan;
 }
@@ -552,7 +322,6 @@ function getMergedAvailability() {
   const table = document.getElementById("availabilityTable");
   const availability = {};
   if (!table) return availability;
-
   for (let i = 1; i < table.rows.length; i++) {
     const day = table.rows[i].cells[0].innerText.trim();
     const hours = parseInt(table.rows[i].cells[1].innerText) || 0;
@@ -570,35 +339,25 @@ function saveMergedAvailability() {
 }
 
 function renderAvailabilityStats() {
-  const availability =
-    JSON.parse(localStorage.getItem("availability")) ||
-    getMergedAvailability();
-
+  const availability = JSON.parse(localStorage.getItem("availability")) || getMergedAvailability();
   const values = Object.values(availability);
   const total = values.reduce((sum, value) => sum + value, 0);
   const avg = (total / 7).toFixed(1);
   const active = values.filter(v => v > 0).length;
-
   const totalEl = document.getElementById("totalHours");
   const avgEl = document.getElementById("avgHours");
   const activeEl = document.getElementById("activeDays");
-
   if (totalEl) totalEl.innerText = total + "h";
   if (avgEl) avgEl.innerText = avg + "h";
   if (activeEl) activeEl.innerText = active;
 }
 
 function renderAvailabilityBars() {
-  const availability =
-    JSON.parse(localStorage.getItem("availability")) ||
-    getMergedAvailability();
-
+  const availability = JSON.parse(localStorage.getItem("availability")) || getMergedAvailability();
   const container = document.getElementById("visualBars");
   if (!container) return;
-
   const values = Object.values(availability);
   const maxHours = Math.max(...values, 1);
-
   container.innerHTML = Object.entries(availability).map(([day, hours]) => {
     const width = Math.max((hours / maxHours) * 100, 8);
     return `
@@ -612,44 +371,38 @@ function renderAvailabilityBars() {
 
 function generateMergedWeeklyPlan() {
   saveMergedAvailability();
-
   const availability = JSON.parse(localStorage.getItem("availability")) || {};
   const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
-
   const container = document.getElementById("weeklyPlan");
   if (!container) return;
-
   container.innerHTML = "";
-
   if (deadlines.length === 0) {
     container.innerHTML = "<p>Please add deadlines first.</p>";
     return;
   }
-
-  const sortedDeadlines = getUpcomingDeadlines(deadlines);
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const weekDates = getCurrentWeekDates();
+  const plan = buildSmartPlan(deadlines, availability);
+
+  function priorityIcon(p) {
+    if (p === "High") return "🔴";
+    if (p === "Medium") return "🟡";
+    return "🟢";
+  }
 
   days.forEach(day => {
     const dayCard = document.createElement("div");
     dayCard.className = "plan-day-card";
-
     const header = document.createElement("div");
     header.className = "plan-day-header";
-
     const title = document.createElement("h4");
     title.innerText = day;
-
     const slots = Number(availability[day] || 0);
-
     const badge = document.createElement("span");
     badge.className = "plan-session-badge";
     badge.innerText = slots === 1 ? "1 session" : `${slots} sessions`;
-
     header.appendChild(title);
     header.appendChild(badge);
     dayCard.appendChild(header);
-
     if (slots <= 0) {
       const empty = document.createElement("div");
       empty.className = "plan-empty";
@@ -658,13 +411,8 @@ function generateMergedWeeklyPlan() {
       container.appendChild(dayCard);
       return;
     }
-
-    const sessionList = document.createElement("div");
-    sessionList.className = "plan-session-list";
-
-    const availableForDay = sortedDeadlines.filter(task => isTaskAvailableForPlanDay(task, day));
-
-    if (availableForDay.length === 0) {
+    const items = plan[day] || [];
+    if (items.length === 0) {
       const empty = document.createElement("div");
       empty.className = "plan-empty";
       empty.innerText = "No upcoming tasks for this day";
@@ -672,26 +420,19 @@ function generateMergedWeeklyPlan() {
       container.appendChild(dayCard);
       return;
     }
-
-    for (let i = 0; i < slots; i++) {
-      const task = availableForDay[i % availableForDay.length];
-
-      const item = document.createElement("div");
-      item.className = "plan-session-item";
-
-      const taskName = getTaskDisplayName(task);
-      const taskId = `merged-${day}-${i}-${task.course || "Course"}-${taskName}`;
-
-      const checkItem = createTaskCheckItem(
-        taskId,
-        `${taskName} (1h)`,
-        task.course || "Course"
-      );
-
-      item.appendChild(checkItem);
-      sessionList.appendChild(item);
-    }
-
+    const sessionList = document.createElement("div");
+    sessionList.className = "plan-session-list";
+    items.forEach((item, i) => {
+      const el = document.createElement("div");
+      el.className = "plan-session-item";
+      const taskId = `merged-${day}-${i}-${item.course}-${item.title}`;
+      const label = item.daysLeft !== null
+        ? `${item.title} (1h) — ${priorityIcon(item.priority)} ${item.daysLeft}d left`
+        : `${item.title} (1h)`;
+      const checkItem = createTaskCheckItem(taskId, label, item.course);
+      el.appendChild(checkItem);
+      sessionList.appendChild(el);
+    });
     dayCard.appendChild(sessionList);
     container.appendChild(dayCard);
   });
