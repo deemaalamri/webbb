@@ -14,7 +14,7 @@
   <a href="dashboard.html" class="active">Dashboard</a>
   <a href="courses.html">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-<a href="availability.html">Weekly Plan</a>
+  <a href="availability.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
@@ -30,7 +30,7 @@
       <h2 id="welcome-user">Hello!</h2>
       <p id="motivational-text">You have <strong id="taskCount">0</strong> tasks today.</p>
     </div>
-<div class="welcome-emoji">📚</div>
+    <div class="welcome-emoji">📚</div>
   </div>
 
   <div class="dashboard-grid">
@@ -58,32 +58,28 @@
     </div>
   </div>
 
-  
+  <div class="card">
+    <h3>⏰ Upcoming Deadlines</h3>
+    <div id="deadlinesList"></div>
+  </div>
 
-    <div class="card">
-      <h3>⏰ Upcoming Deadlines</h3>
-      <div id="deadlinesList"></div>
-    </div>
+  <div class="card">
+    <h3>📈 Weekly Progress</h3>
+    <div class="visit-circles" id="visitCircles"></div>
+  </div>
 
-    <div class="card">
-      <h3>📈 Weekly Progress</h3>
-      <div class="visit-circles" id="visitCircles"></div>
-    </div>
+  <div class="card">
+    <h3>📌 Upcoming Exams</h3>
+    <div id="upcomingExams"></div>
+  </div>
 
-    <div class="card">
-  <h3>📌 Upcoming Exams</h3>
-  <div id="upcomingExams"></div>
-</div>
-
-<div class="card">
-  <h3>📝 Upcoming Assignments</h3>
-  <div id="upcomingAssignments"></div>
-</div>
+  <div class="card">
+    <h3>📝 Upcoming Assignments</h3>
+    <div id="upcomingAssignments"></div>
   </div>
 </div>
 
 <script>
-const courses = JSON.parse(localStorage.getItem("courses")) || [];
 const deadlines = JSON.parse(localStorage.getItem("deadlines")) || [];
 const stats = JSON.parse(localStorage.getItem("stats")) || [];
 
@@ -109,12 +105,13 @@ function renderDeadlines() {
           <h4>${d.name}</h4>
           <span>${d.course}</span>
         </div>
-        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+        <span class="days-left ${urgencyClass}">${Math.max(days, 0)}d</span>
       </div>`;
   }).join('');
   const taskCount = document.getElementById("taskCount");
   if (taskCount) taskCount.innerText = deadlines.length;
 }
+
 function renderUpcomingAssignments() {
   const container = document.getElementById("upcomingAssignments");
   if (!container) return;
@@ -125,8 +122,9 @@ function renderUpcomingAssignments() {
   }
   const sorted = [...assignments].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
   container.innerHTML = sorted.map(d => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const days = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.ceil((new Date(d.date) - today) / (1000 * 60 * 60 * 24));
     let urgencyClass = days <= 3 ? 'urgent' : days <= 7 ? 'soon' : 'normal';
     return `
       <div class="deadline-item">
@@ -134,7 +132,7 @@ function renderUpcomingAssignments() {
           <h4>${d.name}</h4>
           <span>${d.course}</span>
         </div>
-        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+        <span class="days-left ${urgencyClass}">${Math.max(days, 0)}d</span>
       </div>`;
   }).join('');
 }
@@ -149,8 +147,9 @@ function renderUpcomingExams() {
   }
   const sorted = [...exams].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
   container.innerHTML = sorted.map(d => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const days = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.ceil((new Date(d.date) - today) / (1000 * 60 * 60 * 24));
     let urgencyClass = days <= 3 ? 'urgent' : days <= 7 ? 'soon' : 'normal';
     return `
       <div class="deadline-item">
@@ -158,7 +157,7 @@ function renderUpcomingExams() {
           <h4>${d.name}</h4>
           <span>${d.course}</span>
         </div>
-        <span class="days-left ${urgencyClass}">${Math.max(days,0)}d</span>
+        <span class="days-left ${urgencyClass}">${Math.max(days, 0)}d</span>
       </div>`;
   }).join('');
 }
@@ -189,7 +188,7 @@ function renderVisitCircles() {
   const goal = 8;
   container.innerHTML = data.map(s => `
     <div>
-      <div class="circle" style="--percent:${Math.min((s.hours/goal)*100,100)}%"><span>${s.hours}h</span></div>
+      <div class="circle" style="--percent:${Math.min((s.hours / goal) * 100, 100)}%"><span>${s.hours}h</span></div>
       <div class="circle-label">${s.day}</div>
     </div>
   `).join('');
