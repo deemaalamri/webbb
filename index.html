@@ -1,102 +1,91 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STUDY SYNC</title>
-
 <link rel="stylesheet" href="style-index.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 </head>
-
 <body>
 
 <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
 <div class="container">
 
-    <div class="sidebar" id="sidebar">
+  <div class="sidebar" id="sidebar">
+    <img src="images/profile.png" class="profile" alt="Profile" onclick="goProfile()">
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 
+  <div class="main">
 
-        <img src="images/profile.png" class="profile" alt="Profile" onclick="goProfile()">
-
-        <button class="logout-btn" onclick="logout()">Logout</button>
-
+    <div class="header">
+      <h1>STUDY SYNC</h1>
+      <div class="header-button">
+        <button onclick="goLogin()">login</button>
+      </div>
+      <img src="logo.png" class="logo" alt="Logo">
     </div>
 
-    <div class="main">
+    <section class="hero">
+      <h2>Welcome!</h2>
+      <p>Easily organize your time and lessons with advanced control panel and educational services.</p>
+      <button onclick="goLogin()">start now</button>
+    </section>
 
-        <div class="header">
-
-            <h1>STUDY SYNC</h1>
-
-            <div class="header-button">
-                <button onclick="goLogin()">login</button>
-            </div>
-
-        <img src="logo.png" class="logo" alt="Logo">
-        </div>
-
-        <section class="hero">
-            <h2>Welcome!</h2>
-                <p>Easily organize your time and lessons with  advanced control panel and educational services.</p>            
-            <button onclick="goLogin('ابدأ الآن!')">start now</button>
-        </section>
-
-        <section class="section">
-    <h3>Our services</h3>
-
-    <div class="cards">
+    <section class="section">
+      <h3>Our services</h3>
+      <div class="cards">
         <div class="card">
-            <i class="fa-regular fa-calendar"></i>
-            <h4>Organizing lessons & appointments</h4>
-            <p>Plan your lessons and manage your appointments.</p>
+          <i class="fa-regular fa-calendar"></i>
+          <h4>Organizing lessons & appointments</h4>
+          <p>Plan your lessons and manage your appointments.</p>
         </div>
-
         <div class="card">
-            <i class="fa-solid fa-book"></i>
-            <h4>Follow up on courses</h4>
-            <p>Track your courses and assignments to stay always up to date.</p>
+          <i class="fa-solid fa-book"></i>
+          <h4>Follow up on courses</h4>
+          <p>Track your courses and assignments to stay always up to date.</p>
         </div>
-
         <div class="card">
-            <i class="fa-solid fa-list-check"></i>
-            <h4>Flexible weekly plans</h4>
-            <p>Create weekly plans that adapt to your schedule and goals.</p>
+          <i class="fa-solid fa-list-check"></i>
+          <h4>Flexible weekly plans</h4>
+          <p>Create weekly plans that adapt to your schedule and goals.</p>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-        <footer>
-             Copyright &copy; 2026 STUDY SYNC
-        </footer>
+    <footer>
+      Copyright &copy; 2026 STUDY SYNC
+    </footer>
 
-    </div>
+  </div>
 </div>
 
 <script>
-function toggleSidebar(){
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    if(sidebar.style.left === "0px"){
-        sidebar.style.left = "-250px";
-        overlay.classList.remove("active");
-    } else {
-        sidebar.style.left = "0px";
-        overlay.classList.add("active");
-    }
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  if (sidebar.style.left === "0px") {
+    sidebar.style.left = "-250px";
+    overlay.classList.remove("active");
+  } else {
+    sidebar.style.left = "0px";
+    overlay.classList.add("active");
+  }
 }
 
-function goLogin(){
-    window.location.href = "singUp.html";
+function goLogin() {
+  window.location.href = "singUp.html";
 }
 
+function goProfile() {
+  window.location.href = "singUp.html";
+}
 
-function logout(){
-    localStorage.removeItem("user");
-    alert("Logged out");
+function logout() {
+  localStorage.removeItem("user");
+  alert("Logged out");
 }
 </script>
 
