@@ -19,12 +19,12 @@
 </div>
 
 <div class="main">
-  <h1>Study Statistics</h1>
-
   <div class="top-user">
     <span id="userNameDisplay"></span>
     <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
   </div>
+
+  <h1>Study Statistics</h1>
 
   <div class="stats-container">
     <div class="stats-left">
@@ -68,88 +68,52 @@
 <script src="script.js"></script>
 
 <script>
-const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const statsDays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-function readJSON(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch(e) {
-    return fallback;
+function getCompleted(){
+  try{
+    return JSON.parse(localStorage.getItem("ssp_completedTasks") || "{}");
+  }catch(e){
+    return {};
   }
 }
 
-function getAvailability() {
-  return readJSON("availability", null) || readJSON("ssp_availability", {}) || {};
+function getPlanData(){
+  return buildWeeklyPlan();
 }
 
-function getDeadlines() {
-  return readJSON("deadlines", null) || readJSON("ssp_deadlines", []) || [];
+function getSessionId(day, index, item){
+  return `merged-${day}-${index}-${item.course}-${item.title}`;
 }
 
-function getCompleted() {
-  return readJSON("ssp_completedTasks", {}) || {};
+function countCompleted(items, completed, day){
+  return items.reduce((count, item, index) => {
+    const sessionId = getSessionId(day, index, item);
+    return count + (completed[sessionId] ? 1 : 0);
+  }, 0);
 }
 
-function isTaskAvailableForPlanDay(task, dayName) {
-  const due = parseLocalDate(task.date);
-  if (!due) return false;
-  const today = startOfToday();
-  if (due < today) return false;
-  const planDayIndex = days.indexOf(dayName);
-  const dueDayIndex = due.getDay();
-  if (planDayIndex === -1) return false;
-  return planDayIndex <= dueDayIndex;
-}
-
-function buildPlan() {
-  const availability = getAvailability();
-  const deadlines = getUpcomingDeadlines(getDeadlines());
-  const plan = {};
-
-  days.forEach(day => {
-    plan[day] = [];
-    const slots = Number(availability[day] || 0);
-    const availableForDay = deadlines.filter(task => isTaskAvailableForPlanDay(task, day));
-
-    for (let i = 0; i < slots; i++) {
-      if (availableForDay.length === 0) break;
-      const task = availableForDay[i % availableForDay.length];
-      const taskName = getTaskDisplayName(task);
-      plan[day].push({
-        id: `merged-${day}-${i}-${task.course || "Course"}-${taskName}`,
-        title: taskName,
-        course: task.course || "Course"
-      });
-    }
-  });
-
-  return { plan, availability };
-}
-
-function countCompleted(items, completed) {
-  return items.reduce((count, item) => count + (completed[item.id] ? 1 : 0), 0);
-}
-
-function renderTable() {
+function renderTable(){
   const tbody = document.querySelector("#statsTable tbody");
   const completed = getCompleted();
-  const { plan, availability } = buildPlan();
+  const {plan, availability} = getPlanData();
   tbody.innerHTML = "";
 
-  days.forEach(day => {
+  statsDays.forEach(day => {
     const availableHours = Number(availability[day] || 0);
     const items = plan[day] || [];
-    const done = countCompleted(items, completed);
+    const done = countCompleted(items, completed, day);
     let status;
 
-    if (items.length === 0) {
+    if(items.length === 0){
       status = availableHours > 0
         ? '<span class="status-neutral">No Sessions</span>'
         : '<span>—</span>';
-    } else if (done === items.length) {
+    }
+    else if(done === items.length){
       status = '<span class="status-completed">✓ Completed</span>';
-    } else {
+    }
+    else{
       status = `<span class="status-missed">✗ Missed (${items.length - done})</span>`;
     }
 
@@ -163,48 +127,51 @@ function renderTable() {
   });
 }
 
-function renderBars() {
+function renderBars(){
   const container = document.getElementById("chartContainer");
   const completed = getCompleted();
-  const { plan } = buildPlan();
+  const {plan} = getPlanData();
   container.innerHTML = "";
 
-  const max = Math.max(...days.map(d => (plan[d] || []).length), 1);
+  const max = Math.max(...statsDays.map(day => (plan[day] || []).length), 1);
 
-  days.forEach(day => {
+  statsDays.forEach(day => {
     const items = plan[day] || [];
-    const done = countCompleted(items, completed);
+    const done = countCompleted(items, completed, day);
     const width = items.length > 0 ? (done / max) * 100 : 0;
+    const label = items.length > 0 ? `${done}/${items.length} done` : "No Sessions";
 
     const row = document.createElement("div");
     row.classList.add("bar-row");
     row.innerHTML = `
       <span class="day-name">${day}</span>
-      <div class="bar" style="width:${width}%">${done}/${items.length} done</div>
+      <div class="bar" style="width:${width}%">${label}</div>
     `;
     container.appendChild(row);
   });
 }
 
-function renderCards() {
+function renderCards(){
   const completed = getCompleted();
-  const { plan } = buildPlan();
-  let total = 0, done = 0, miss = 0;
+  const {plan} = getPlanData();
+  let total = 0;
+  let done = 0;
+  let missed = 0;
 
-  days.forEach(day => {
+  statsDays.forEach(day => {
     const items = plan[day] || [];
-    const c = countCompleted(items, completed);
+    const completedToday = countCompleted(items, completed, day);
     total += items.length;
-    done += c;
-    miss += Math.max(items.length - c, 0);
+    done += completedToday;
+    missed += Math.max(items.length - completedToday, 0);
   });
 
   document.getElementById("totalHours").innerText = total + "h";
   document.getElementById("completedSessions").innerText = done;
-  document.getElementById("missedSessions").innerText = miss;
+  document.getElementById("missedSessions").innerText = missed;
 }
 
-function initStatisticsPage() {
+function initStatisticsPage(){
   renderTable();
   renderBars();
   renderCards();
