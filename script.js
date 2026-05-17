@@ -311,6 +311,7 @@ function initMergedAvailabilityPage() {
   }
   renderAvailabilityStats();
   renderAvailabilityBars();
+  loadSmartNotifications();
   renderUpcomingReminder();
   const saveBtn = document.getElementById("saveAvailability");
   const planBtn = document.getElementById("generateWeeklyPlanBtn");
@@ -380,6 +381,8 @@ function generateMergedWeeklyPlan() {
     container.innerHTML = "<p>Please add deadlines first.</p>";
     return;
   }
+  const generatedPlan = {};
+
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const plan = buildSmartPlan(deadlines, availability);
 
@@ -390,6 +393,8 @@ function generateMergedWeeklyPlan() {
   }
 
   days.forEach(day => {
+
+    generatedPlan[day] = [];
     const dayCard = document.createElement("div");
     dayCard.className = "plan-day-card";
     const header = document.createElement("div");
@@ -429,6 +434,13 @@ function generateMergedWeeklyPlan() {
       const label = item.daysLeft !== null
         ? `${item.title} (1h) — ${priorityIcon(item.priority)} ${item.daysLeft}d left`
         : `${item.title} (1h)`;
+      generatedPlan[day].push({
+        title: item.title || item.name || "Study Session",
+        course: item.course || "",
+        date: item.date || "",
+        priority: item.priority || ""
+      });
+
       const checkItem = createTaskCheckItem(taskId, label, item.course);
       el.appendChild(checkItem);
       sessionList.appendChild(el);
@@ -436,4 +448,132 @@ function generateMergedWeeklyPlan() {
     dayCard.appendChild(sessionList);
     container.appendChild(dayCard);
   });
+
+  localStorage.setItem("mergedWeeklyPlan", JSON.stringify(generatedPlan));
+  renderStudySessionNotification();
 }
+
+
+/* === FR14 + FR15 Notifications === */
+function getProjectDeadlines() {
+  return (
+    JSON.parse(localStorage.getItem("deadlines") || "null") ||
+    JSON.parse(localStorage.getItem("ssp_deadlines") || "null") ||
+    []
+  );
+}
+
+function getDeadlineLabel(task) {
+  return task.name || task.examName || task.assignmentName || task.course || "Task";
+}
+
+function renderUpcomingReminder() {
+  const reminderBox = document.getElementById("reminderBox");
+  if (!reminderBox) return;
+
+  const tasks = getProjectDeadlines();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcoming = [];
+
+  tasks.forEach(task => {
+    const dateValue = task.date || task.dueDate || task.deadline || task.examDate;
+    if (!dateValue) return;
+
+    const dueDate = new Date(dateValue);
+    if (isNaN(dueDate.getTime())) return;
+    dueDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays >= 0 && diffDays <= 3) {
+      upcoming.push({
+        label: getDeadlineLabel(task),
+        course: task.course || "",
+        diffDays
+      });
+    }
+  });
+
+  if (upcoming.length === 0) {
+    reminderBox.style.display = "none";
+    return;
+  }
+
+  reminderBox.style.display = "block";
+
+  const details = upcoming.map(item => {
+    if (item.diffDays === 0) return `${item.label}${item.course ? " - " + item.course : ""} is due today`;
+    if (item.diffDays === 1) return `${item.label}${item.course ? " - " + item.course : ""} is due tomorrow`;
+    return `${item.label}${item.course ? " - " + item.course : ""} is due in ${item.diffDays} days`;
+  }).join("<br>");
+
+  reminderBox.innerHTML = `🔔 You have ${upcoming.length} upcoming task(s).<br>${details}`;
+}
+
+
+function renderStudySessionNotification() {
+  const box = document.getElementById("sessionNotification");
+  if (!box) return;
+
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+  const savedPlan = JSON.parse(localStorage.getItem("mergedWeeklyPlan") || "{}");
+
+  let dayToShow = todayName;
+  let tasksToShow = Array.isArray(savedPlan[todayName]) ? savedPlan[todayName] : [];
+
+  if (tasksToShow.length === 0) {
+    const todayIndex = days.indexOf(todayName);
+    for (let i = 1; i <= 7; i++) {
+      const nextDay = days[(todayIndex + i) % 7];
+      if (Array.isArray(savedPlan[nextDay]) && savedPlan[nextDay].length > 0) {
+        dayToShow = nextDay;
+        tasksToShow = savedPlan[nextDay];
+        break;
+      }
+    }
+  }
+
+  if (tasksToShow.length === 0) {
+    const availability = JSON.parse(localStorage.getItem("availability") || "{}");
+    const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
+    const sessions = Number(availability[todayName] || 0);
+
+    for (let i = 0; i < sessions && deadlines.length > 0; i++) {
+      const task = deadlines[i % deadlines.length];
+      tasksToShow.push({
+        title: task.name || task.examName || task.assignmentName || "Study Session",
+        course: task.course || ""
+      });
+    }
+  }
+
+  if (tasksToShow.length > 0) {
+    box.style.display = "block";
+
+    const taskNames = tasksToShow.map(task => {
+      const title = task.title || task.name || task.examName || task.assignmentName || "Study Session";
+      const course = task.course || "";
+      return course ? `${title} - ${course}` : title;
+    }).join("<br>");
+
+    const heading = dayToShow === todayName ? "Today's Study Sessions" : `Next Study Sessions (${dayToShow})`;
+
+    box.innerHTML = `📚 ${heading}:<br>${taskNames}`;
+  } else {
+    box.style.display = "none";
+  }
+}
+
+
+function loadSmartNotifications() {
+  renderUpcomingReminder();
+  renderStudySessionNotification();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  setTimeout(loadSmartNotifications, 300);
+});

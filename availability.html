@@ -26,9 +26,27 @@
 
   <h1>📅 Availability & Weekly Plan</h1>
 
-  <div id="upcomingReminder">⚠️ Reminder: Loading upcoming tasks...</div>
+  <div id="reminderBox" class="smart-reminder-box" style="
+background:#fff3cd;
+padding:12px;
+border-radius:10px;
+margin-bottom:15px;
+color:#856404;
+font-weight:bold;
+display:none;
+"></div>
 
-  <div class="availability-stats">
+  <div id="sessionNotification" class="smart-session-box" style="
+background:#d1ecf1;
+padding:12px;
+border-radius:10px;
+margin-bottom:15px;
+color:#0c5460;
+font-weight:bold;
+display:none;
+"></div>
+
+<div class="availability-stats">
     <div class="stat-box">
       <div class="number" id="totalHours">0h</div>
       <div class="label">Total Weekly Hours</div>
