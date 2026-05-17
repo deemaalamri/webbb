@@ -4,40 +4,6 @@
 <meta charset="UTF-8">
 <title>Courses</title>
 <link rel="stylesheet" href="style.css">
-<style>
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-}
-.modal-overlay.active { display: flex; }
-.modal-box {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px 28px;
-  min-width: 300px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-}
-.modal-box p { font-size: 16px; margin-bottom: 24px; color: #333; }
-.modal-buttons { display: flex; gap: 12px; justify-content: center; }
-.modal-btn-cancel {
-  padding: 10px 28px; border-radius: 10px;
-  border: 1.5px solid #ccc; background: #fff;
-  color: #555; font-size: 15px; cursor: pointer;
-}
-.modal-btn-confirm {
-  padding: 10px 28px; border-radius: 10px;
-  border: none; background: #e74c3c;
-  color: #fff; font-size: 15px; cursor: pointer;
-}
-.modal-btn-cancel:hover { background: #f5f5f5; }
-.modal-btn-confirm:hover { background: #c0392b; }
-</style>
 </head>
 
 <body onload="loadUserProfile();">
@@ -47,33 +13,28 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="courses.html" class="active">Courses</a>
   <a href="deadlines.html">Deadlines</a>
-<a href="availability.html">Weekly Plan</a>
+  <a href="availability.html">Weekly Plan</a>
   <a href="statistics.html">Statistics</a>
   <a href="index.html">Log out</a>
 </div>
 
 <div class="main">
   <h1>📚 Courses</h1>
-<div class="top-user">
-  <span id="userNameDisplay"></span>
-<img id="userAvatar" class="user-avatar" src="female.png" alt="User">
-</div>
+  <div class="top-user">
+    <span id="userNameDisplay"></span>
+    <img id="userAvatar" class="user-avatar" src="female.png" alt="User">
+  </div>
 
   <div class="course-stats">
     <div class="stat-box">
       <div class="number" id="totalCourses">0</div>
       <div class="label">Total Courses</div>
     </div>
-    <div class="stat-box">
-      <div class="number" id="totalHours">0h</div>
-      <div class="label">Total Hours</div>
-    </div>
   </div>
 
   <div class="card">
     <div class="add-form">
       <input type="text" id="courseName" placeholder="📖 Course Name">
-      <input type="number" id="hours" placeholder="⏰ Credit Hours" min="1">
       <button onclick="addCourse()">+ Add Course</button>
     </div>
 
@@ -82,7 +43,6 @@
         <tr>
           <th>ID</th>
           <th>Course Name</th>
-          <th>Credit Hours</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -90,9 +50,9 @@
     </table>
 
     <div id="emptyMsg" class="empty-hidden">
-  <span>📚</span>
-  <p>No courses added yet. Start by adding your first course!</p>
-</div>
+      <span>📚</span>
+      <p>No courses added yet. Start by adding your first course!</p>
+    </div>
   </div>
 </div>
 
@@ -108,146 +68,71 @@ function isDuplicate(name, excludeId = null) {
 
 function updateStats() {
   document.getElementById("totalCourses").innerText = courses.length;
-  const totalHours = courses.reduce((sum, c) => sum + c.hours, 0);
-  document.getElementById("totalHours").innerText = totalHours + "h";
 }
+
 function showToast(message, type = "success") {
-
- const toast = document.createElement("div");
-
- toast.className = `toast ${type}`;
- toast.textContent = message;
-
- document.body.appendChild(toast);
-
- setTimeout(() => {
-  toast.classList.add("show");
- }, 100);
-
- setTimeout(() => {
-  toast.classList.remove("show");
-
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
   setTimeout(() => {
-   toast.remove();
-  }, 300);
-
- }, 3000);
+    toast.classList.add("show");
+  }, 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
 }
 
-/*function render() {
- const tbody = document.querySelector("#table tbody");
- tbody.innerHTML = "";
-
- if (courses.length === 0) {
-  document.getElementById("emptyMsg").style.display = "block";
-  document.querySelector("#table thead").style.display = "none";
- } else {
-  document.getElementById("emptyMsg").style.display = "none";
-  document.querySelector("#table thead").style.display = "";
- }
-
- courses.forEach(c => {
-  const row = document.createElement("tr");
-<td>${c.id}</td> بدال هذا  لان هذا حتى لو حذفت يعطني اي دي جديد 
-  row.innerHTML = `
-   
-   <td>${index + 1}</td>
-
-   <td>
-    <span 
-      class="editable-course"
-      ondblclick="enableEdit(${c.id}, this)"
-      title="Double click to edit"
-    >
-      ${c.name}
-    </span>
-   </td>
-
-   <td>${c.hours}h</td>
-
-   <td>
-    <button class="btn-delete" onclick="deleteCourse(${c.id})">
-      🗑 Delete
-    </button>
-   </td>
-  `;
-
-  tbody.appendChild(row);
- });
-
- updateStats();
-}**/
 function render() {
+  const tbody = document.querySelector("#table tbody");
+  tbody.innerHTML = "";
 
- const tbody = document.querySelector("#table tbody");
+  if (courses.length === 0) {
+    document.getElementById("emptyMsg").style.display = "block";
+    document.querySelector("#table thead").style.display = "none";
+  } else {
+    document.getElementById("emptyMsg").style.display = "none";
+    document.querySelector("#table thead").style.display = "";
+  }
 
- tbody.innerHTML = "";
+  courses.forEach((c, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>
+        <span class="editable-course" ondblclick="enableEdit(${c.id}, this)">
+          ${c.name}
+        </span>
+      </td>
+      <td>
+        <button class="btn-delete" onclick="deleteCourse(${c.id})">🗑 Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
 
- if (courses.length === 0) {
-
-  document.getElementById("emptyMsg").style.display = "block";
-
-  document.querySelector("#table thead").style.display = "none";
-
- } else {
-
-  document.getElementById("emptyMsg").style.display = "none";
-
-  document.querySelector("#table thead").style.display = "";
-
- }
-
- courses.forEach((c, index) => {
-
-  const row = document.createElement("tr");
-
-  row.innerHTML = `
-   <td>${index + 1}</td>
-
-   <td>
-    <span 
-      class="editable-course"
-      ondblclick="enableEdit(${c.id}, this)"
-    >
-      ${c.name}
-    </span>
-   </td>
-
-   <td>${c.hours}h</td>
-
-   <td>
-    <button class="btn-delete" onclick="deleteCourse(${c.id})">
-      🗑 Delete
-    </button>
-   </td>
-  `;
-
-  tbody.appendChild(row);
-
- });
-
- updateStats();
+  updateStats();
 }
+
 function addCourse() {
   const name = document.getElementById("courseName").value.trim();
-  const hours = parseInt(document.getElementById("hours").value);
 
-if (!name || isNaN(hours) || hours <= 0) {
- showToast("Please enter valid course name and hours", "error");
- return;
-}
+  if (!name) {
+    showToast("Please enter a valid course name", "error");
+    return;
+  }
 
-if (isDuplicate(name)) {
- showToast("This course already exists!", "error");
- return;
-}
+  if (isDuplicate(name)) {
+    showToast("This course already exists!", "error");
+    return;
+  }
 
-  courses.push({ id: nextId++, name, hours });
+  courses.push({ id: nextId++, name });
   localStorage.setItem("courses", JSON.stringify(courses));
-
   document.getElementById("courseName").value = "";
-  document.getElementById("hours").value = "";
-
   render();
 }
 
@@ -260,55 +145,47 @@ function deleteCourse(id) {
   });
 }
 
-
 function enableEdit(id, element) {
-
- const course = courses.find(c => c.id === id);
-
- element.innerHTML = `
-  <input 
-    type="text" 
-    id="editInput-${id}" 
-    value="${course.name}"
-    class="edit-input"
-    onblur="saveCourse(${id})"
-    onkeypress="handleKey(event, ${id})"
-    autofocus
-  >
- `;
+  const course = courses.find(c => c.id === id);
+  element.innerHTML = `
+    <input
+      type="text"
+      id="editInput-${id}"
+      value="${course.name}"
+      class="edit-input"
+      onblur="saveCourse(${id})"
+      onkeypress="handleKey(event, ${id})"
+      autofocus
+    >
+  `;
 }
 
 function handleKey(event, id) {
- if (event.key === "Enter") {
-  saveCourse(id);
- }
+  if (event.key === "Enter") {
+    saveCourse(id);
+  }
 }
 
 function saveCourse(id) {
+  const input = document.getElementById(`editInput-${id}`);
+  let newName = input.value.trim();
+  const course = courses.find(c => c.id === id);
 
- const input = document.getElementById(`editInput-${id}`);
- let newName = input.value.trim();
+  if (!newName) {
+    showToast("Course name cannot be empty", "error");
+    render();
+    return;
+  }
 
- const course = courses.find(c => c.id === id);
+  if (isDuplicate(newName, id)) {
+    showToast("This course already exists!", "error");
+    render();
+    return;
+  }
 
- if (!newName) {
-  showToast("Course name cannot be empty", "error");
-  render();
-  return;
- }
-
- if (isDuplicate(newName, id)) {
-  showToast("This course already exists!", "error");
-  render();
-  return;
- }
-
- course.name = newName;
-
- localStorage.setItem("courses", JSON.stringify(courses));
-
- showToast("Course updated successfully", "success");
-
+  course.name = newName;
+  localStorage.setItem("courses", JSON.stringify(courses));
+  showToast("Course updated successfully", "success");
   render();
 }
 
@@ -328,22 +205,20 @@ function closeModal() {
   modalCallback = null;
 }
 
-function confirmAction() {
-  closeModal();
-  if (modalCallback) modalCallback();
-}
-
 render();
 </script>
+
+<script src="script.js"></script>
 
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box">
     <p id="modalMessage">Are you sure?</p>
     <div class="modal-buttons">
       <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
-<button class="modal-btn-confirm" id="confirmBtn">OK</button>  
-  </div>
+      <button class="modal-btn-confirm" id="confirmBtn">OK</button>
+    </div>
   </div>
 </div>
+
 </body>
 </html>
